@@ -181,12 +181,24 @@ def enviar_email(asunto, cuerpo, config):
         return False
 
 
+def calcular_monto_compra(capital, posiciones_abiertas, max_posiciones):
+    """Calcula cuanto invertir por operacion"""
+    posiciones_disponibles = max_posiciones - len(posiciones_abiertas)
+    if posiciones_disponibles <= 0:
+        return 0
+    monto_por_posicion = capital * 0.80
+    return monto_por_posicion
+
+
 def generar_html_reporte(señales, posiciones, capital, config):
+    monto_compra = calcular_monto_compra(capital, posiciones, config['max_posiciones'])
+
     html = f"""
     <h2 style="color:#74b9ff;margin-top:0;">📊 Señales del Día - {datetime.now().strftime('%Y-%m-%d')}</h2>
     <table style="width:100%;border-collapse:collapse;margin:15px 0;">
       <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Capital Disponible</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;">${capital:,.2f}</td></tr>
       <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Posiciones Abiertas</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;">{len(posiciones)}/{config['max_posiciones']}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Monto a Invertir por Señal</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;color:#00b894;">${monto_compra:,.2f}</td></tr>
     </table>
     """
 
@@ -198,6 +210,8 @@ def generar_html_reporte(señales, posiciones, capital, config):
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Ticker</th>
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Entrada</th>
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Actual</th>
+            <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Acciones</th>
+            <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Invertido</th>
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">P&L</th>
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Días</th>
         </tr>
@@ -206,11 +220,14 @@ def generar_html_reporte(señales, posiciones, capital, config):
             pnl_pct = ((pos.get('precio_actual', pos['entry_price']) / pos['entry_price']) - 1) * 100
             dias = (datetime.now() - datetime.fromisoformat(pos['entry_date'])).days
             color = '#00b894' if pnl_pct >= 0 else '#e17055'
+            invertido = pos.get('shares', 0) * pos['entry_price']
             html += f"""
             <tr>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;font-weight:bold;">{ticker}</td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${pos['entry_price']:.2f}</td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${pos.get('precio_actual', 0):.2f}</td>
+                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{pos.get('shares', 0)}</td>
+                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${invertido:,.2f}</td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:{color};"><b>{pnl_pct:+.2f}%</b></td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{dias}</td>
             </tr>
@@ -229,22 +246,38 @@ def generar_html_reporte(señales, posiciones, capital, config):
             <tr>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Ticker</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Precio</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Comprar</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Acciones</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">RSI</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Score</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Razón</th>
             </tr>
             """
             for s in compras:
+                acciones_sugeridas = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
+                monto_real = acciones_sugeridas * s['precio']
                 html += f"""
                 <tr>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;font-weight:bold;">{s['ticker']}</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${s['precio']:.2f}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#00b894;"><b>${monto_real:,.2f}</b></td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{acciones_sugeridas} acciones</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{s['rsi']:.0f}</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#00b894;"><b>{s['score']:.0f}</b></td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;font-size:12px;">{s['razon']}</td>
                 </tr>
                 """
             html += "</table>"
+
+            html += f"""
+            <div style="background:#0f3460;border-radius:8px;padding:15px;margin:15px 0;">
+              <p style="margin:0;color:#00b894;font-weight:bold;">Para confirmar tu compra, ejecutá:</p>
+              <p style="margin:5px 0 0 0;font-family:monospace;color:#e0e0e0;">
+                python bot_alertas.py --comprar TICKER PRECIO CANTIDAD
+              </p>
+              <p style="margin:5px 0 0 0;color:#666;font-size:12px;">
+                Ejemplo: python bot_alertas.py --comprar NVDA 210.50 38
+              </p>
+            </div>
+            """
 
         if ventas:
             html += """
@@ -265,6 +298,18 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 </tr>
                 """
             html += "</table>"
+
+            html += """
+            <div style="background:#0f3460;border-radius:8px;padding:15px;margin:15px 0;">
+              <p style="margin:0;color:#e17055;font-weight:bold;">Para confirmar tu venta, ejecutá:</p>
+              <p style="margin:5px 0 0 0;font-family:monospace;color:#e0e0e0;">
+                python bot_alertas.py --vender TICKER PRECIO
+              </p>
+              <p style="margin:5px 0 0 0;color:#666;font-size:12px;">
+                Ejemplo: python bot_alertas.py --vender NVDA 215.30
+              </p>
+            </div>
+            """
 
         if mantenes and len(mantenes) <= 6:
             html += """
@@ -291,6 +336,87 @@ def generar_html_reporte(señales, posiciones, capital, config):
         html += '<p style="color:#666;text-align:center;margin:30px 0;">Sin señales hoy</p>'
 
     return html
+
+
+def comprar_acciones(ticker, precio, cantidad):
+    """Registra una compra manual"""
+    config = cargar_config()
+    estado = cargar_estado()
+    ticker = ticker.upper()
+
+    if ticker in estado.get('posiciones', {}):
+        print(f"  [ERROR] Ya tenes posicion en {ticker}")
+        return False
+
+    if len(estado.get('posiciones', {})) >= config['max_posiciones']:
+        print(f"  [ERROR] Ya tenes {config['max_posiciones']} posiciones (maximo)")
+        return False
+
+    costo = cantidad * precio * (1 + config['comision'])
+    if costo > estado.get('capital_disponible', 0):
+        print(f"  [ERROR] Capital insuficiente: necesitas ${costo:,.2f}, tenes ${estado.get('capital_disponible', 0):,.2f}")
+        return False
+
+    if 'posiciones' not in estado:
+        estado['posiciones'] = {}
+
+    estado['posiciones'][ticker] = {
+        'entry_price': precio,
+        'shares': cantidad,
+        'entry_date': datetime.now().isoformat(),
+        'precio_actual': precio,
+        'costo_total': costo
+    }
+    estado['capital_disponible'] -= costo
+    estado['historial'].append({
+        'fecha': datetime.now().strftime('%Y-%m-%d'),
+        'accion': 'COMPRA',
+        'ticker': ticker,
+        'precio': precio,
+        'shares': cantidad,
+        'costo': costo
+    })
+    guardar_estado(estado)
+
+    print(f"  [OK] Compra registrada: {cantidad} acciones de {ticker} a ${precio:.2f}")
+    print(f"  [OK] Costo total: ${costo:,.2f}")
+    print(f"  [OK] Capital restante: ${estado['capital_disponible']:,.2f}")
+    return True
+
+
+def vender_acciones(ticker, precio):
+    """Registra una venta manual"""
+    config = cargar_config()
+    estado = cargar_estado()
+    ticker = ticker.upper()
+
+    if ticker not in estado.get('posiciones', {}):
+        print(f"  [ERROR] No tenes posicion en {ticker}")
+        return False
+
+    pos = estado['posiciones'][ticker]
+    cantidad = pos['shares']
+    ingreso = cantidad * precio * (1 - config['comision'])
+    pnl = ingreso - pos['costo_total']
+
+    estado['capital_disponible'] += ingreso
+    del estado['posiciones'][ticker]
+    estado['historial'].append({
+        'fecha': datetime.now().strftime('%Y-%m-%d'),
+        'accion': 'VENTA',
+        'ticker': ticker,
+        'precio': precio,
+        'shares': cantidad,
+        'ingreso': ingreso,
+        'pnl': pnl
+    })
+    guardar_estado(estado)
+
+    print(f"  [OK] Venta registrada: {cantidad} acciones de {ticker} a ${precio:.2f}")
+    print(f"  [OK] Ingreso: ${ingreso:,.2f}")
+    print(f"  [OK] P&L: ${pnl:,.2f}")
+    print(f"  [OK] Capital total: ${estado['capital_disponible']:,.2f}")
+    return True
 
 
 def ejecutar_bot():
@@ -406,4 +532,24 @@ def ejecutar_bot():
 
 
 if __name__ == '__main__':
-    ejecutar_bot()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '--comprar' and len(sys.argv) >= 5:
+            ticker = sys.argv[2]
+            precio = float(sys.argv[3])
+            cantidad = int(sys.argv[4])
+            comprar_acciones(ticker, precio, cantidad)
+        elif sys.argv[1] == '--vender' and len(sys.argv) >= 4:
+            ticker = sys.argv[2]
+            precio = float(sys.argv[3])
+            vender_acciones(ticker, precio)
+        elif sys.argv[1] == '--estado':
+            estado = cargar_estado()
+            print(json.dumps(estado, indent=2, default=str))
+        else:
+            print("Uso:")
+            print("  python bot_alertas.py                    # Ejecutar bot (analisis + email)")
+            print("  python bot_alertas.py --comprar TICKER PRECIO CANTIDAD")
+            print("  python bot_alertas.py --vender TICKER PRECIO")
+            print("  python bot_alertas.py --estado           # Ver estado actual")
+    else:
+        ejecutar_bot()
