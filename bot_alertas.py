@@ -13,6 +13,8 @@ import yfinance as yf
 import warnings
 warnings.filterwarnings('ignore')
 
+from operaciones_tracker import cargar_operaciones, calcular_estado, generar_tracker_excel, fmt_ars as fmt_ars_tracker
+
 RUTA = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(RUTA, 'config.json')
 ESTADO_PATH = os.path.join(RUTA, 'estado.json')
@@ -212,13 +214,15 @@ def calcular_monto_compra(capital, posiciones_abiertas, max_posiciones):
 
 def generar_html_reporte(señales, posiciones, capital, config):
     monto_compra = calcular_monto_compra(capital, posiciones, config['max_posiciones'])
+    mep = obtener_dolar_mep()
 
     html = f"""
-    <h2 style="color:#74b9ff;margin-top:0;">📊 Señales del Día - {datetime.now().strftime('%Y-%m-%d')}</h2>
+    <h2 style="color:#74b9ff;margin-top:0;">Señales del Dia - {datetime.now().strftime('%Y-%m-%d')}</h2>
     <table style="width:100%;border-collapse:collapse;margin:15px 0;">
-      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Capital Disponible</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;">USD {capital:,.2f}</td></tr>
-      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Posiciones Abiertas</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;">{len(posiciones)}/{config['max_posiciones']}</td></tr>
-      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Monto a Invertir por Señal</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;color:#00b894;">USD {monto_compra:,.2f}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Capital Disponible</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;">USD {capital:,.2f}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Posiciones Abiertas</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;">{len(posiciones)}/{config['max_posiciones']}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Monto a Invertir por Señal</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;color:#00b894;">USD {monto_compra:,.2f}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Dolar MEP</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;">${fmt_ars(mep)}</td></tr>
     </table>
     """
 
@@ -230,24 +234,25 @@ def generar_html_reporte(señales, posiciones, capital, config):
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Ticker</th>
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Entrada</th>
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Actual</th>
-            <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Acciones</th>
+            <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">CEDEARs</th>
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Invertido</th>
             <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">P&L</th>
-            <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Días</th>
+            <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Dias</th>
         </tr>
         """
         for ticker, pos in posiciones.items():
+            ratio = CEDEAR_RATIOS.get(ticker, 1)
             pnl_pct = ((pos.get('precio_actual', pos['entry_price']) / pos['entry_price']) - 1) * 100
             dias = (datetime.now() - datetime.fromisoformat(pos['entry_date'])).days
             color = '#00b894' if pnl_pct >= 0 else '#e17055'
-            invertido = pos.get('shares', 0) * pos['entry_price']
+            invertido_ars = pos.get('shares', 0) * pos['entry_price'] * mep / ratio
             html += f"""
             <tr>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;font-weight:bold;">{ticker}</td>
-                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${pos['entry_price']:.2f}</td>
-                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${pos.get('precio_actual', 0):.2f}</td>
+                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(pos['entry_price'] * mep / ratio)} ARS</td>
+                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(pos.get('precio_actual', 0) * mep / ratio)} ARS</td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{pos.get('shares', 0)}</td>
-                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${invertido:,.2f}</td>
+                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(invertido_ars)} ARS</td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:{color};"><b>{pnl_pct:+.2f}%</b></td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{dias}</td>
             </tr>
@@ -260,21 +265,20 @@ def generar_html_reporte(señales, posiciones, capital, config):
         mantenes = [s for s in señales if s['tipo'] == 'MANTENER']
 
         if compras:
-            html += """
+            html += f"""
             <h3 style="color:#00b894;">Señales de COMPRA</h3>
             <table style="width:100%;border-collapse:collapse;">
             <tr>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Ticker</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">P. CEDEAR</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Inversión</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">CEDEARs</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">RSI</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Razón</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;width:60px;">Ticker</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:100px;">P. CEDEAR</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:120px;">Inversion</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:70px;">CEDEARs</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:40px;">RSI</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Razon</th>
             </tr>
             """
             for s in compras:
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                mep = obtener_dolar_mep()
                 precio_cedear_ars = s['precio'] * mep / ratio
                 monto_ars = monto_compra * mep
                 cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
@@ -282,17 +286,16 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 html += f"""
                 <tr>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;font-weight:bold;">{s['ticker']}</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(precio_cedear_ars)} ARS</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#00b894;"><b>${fmt_ars(monto_real_ars)} ARS</b></td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{cedears}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(precio_cedear_ars)}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#00b894;font-weight:bold;">${fmt_ars(monto_real_ars)}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;font-weight:bold;">{cedears}</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{s['rsi']:.0f}</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;font-size:12px;">{s['razon']}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;font-size:11px;">{s['razon']}</td>
                 </tr>
                 """
             html += "</table>"
 
             # Generar mensaje WhatsApp para asesor
-            mep = obtener_dolar_mep()
             if len(compras) == 1:
                 s = compras[0]
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
@@ -319,44 +322,57 @@ def generar_html_reporte(señales, posiciones, capital, config):
             if msg_whatsapp:
                 html += f"""
                 <div style="background:#25D366;border-radius:8px;padding:15px;margin:15px 0;">
-                  <p style="margin:0 0 10px 0;color:#fff;font-weight:bold;">📱 Mensaje para tu asesor (cortar y pegar en WhatsApp):</p>
-                  <div id="msg-whatsapp" style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;white-space:pre-wrap;">{msg_whatsapp}</div>
-                  <p style="margin:10px 0 0 0;color:#fff;font-size:12px;">Copiá el mensaje de arriba y pegalo en WhatsApp con tu asesor</p>
+                  <p style="margin:0 0 10px 0;color:#fff;font-weight:bold;">Mensaje para tu asesor (cortar y pegar en WhatsApp):</p>
+                  <div style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;white-space:pre-wrap;">{msg_whatsapp}</div>
                 </div>
                 """
 
-            html += """
+        if ventas:
+            html += f"""
             <h3 style="color:#e17055;">Señales de VENTA</h3>
             <table style="width:100%;border-collapse:collapse;">
             <tr>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Ticker</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Precio</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Razón</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;width:60px;">Ticker</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:100px;">P. CEDEAR</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:120px;">Ingreso</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:70px;">CEDEARs</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Razon</th>
             </tr>
             """
             for s in ventas:
+                ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
+                precio_cedear_ars = s['precio'] * mep / ratio
+                # Buscar posicion activa para saber cuantos cedears tenemos
+                pos_act = posiciones.get(s['ticker'], {})
+                cedears = pos_act.get('shares', 0)
+                ingreso_ars = cedears * precio_cedear_ars if cedears > 0 else 0
                 html += f"""
                 <tr>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;font-weight:bold;">{s['ticker']}</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${s['precio']:.2f}</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;font-size:12px;">{s['razon']}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(precio_cedear_ars)}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#e17055;font-weight:bold;">${fmt_ars(ingreso_ars)}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;font-weight:bold;">{cedears}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;font-size:11px;">{s['razon']}</td>
                 </tr>
                 """
             html += "</table>"
 
             # Generar mensaje WhatsApp para venta
-            mep = obtener_dolar_mep()
             if len(ventas) == 1:
                 s = ventas[0]
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                 precio_cedear_ars = s['precio'] * mep / ratio
-                msg_whatsapp_v = f"Lucas, buenas tardes. Quisiera realizar una venta de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1\nPrecio actual: ${fmt_ars(precio_cedear_ars)} ARS (~USD {s['precio']:.2f})\n\nQuedo atento."
+                pos_act = posiciones.get(s['ticker'], {})
+                cedears = pos_act.get('shares', 0)
+                msg_whatsapp_v = f"Lucas, buenas tardes. Quisiera realizar una venta de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1\n{cedears} CEDEARs a ${fmt_ars(precio_cedear_ars)} ARS\n\nQuedo atento."
             elif len(ventas) > 1:
                 lineas = []
                 for s in ventas:
                     ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                     precio_cedear_ars = s['precio'] * mep / ratio
-                    lineas.append(f"• {s['ticker']}: ${fmt_ars(precio_cedear_ars)} ARS (~USD {s['precio']:.2f})")
+                    pos_act = posiciones.get(s['ticker'], {})
+                    cedears = pos_act.get('shares', 0)
+                    lineas.append(f"• {s['ticker']}: {cedears} CEDEARs a ${fmt_ars(precio_cedear_ars)} ARS")
                 msg_whatsapp_v = f"Lucas, buenas tardes. Quisiera realizar ventas de CEDEARs:\n\n" + "\n".join(lineas) + "\n\nQuedo atento."
             else:
                 msg_whatsapp_v = ""
@@ -364,35 +380,37 @@ def generar_html_reporte(señales, posiciones, capital, config):
             if msg_whatsapp_v:
                 html += f"""
                 <div style="background:#25D366;border-radius:8px;padding:15px;margin:15px 0;">
-                  <p style="margin:0 0 10px 0;color:#fff;font-weight:bold;">📱 Mensaje para tu asesor (cortar y pegar en WhatsApp):</p>
-                  <div id="msg-whatsapp" style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;white-space:pre-wrap;">{msg_whatsapp_v}</div>
-                  <p style="margin:10px 0 0 0;color:#fff;font-size:12px;">Copiá el mensaje de arriba y pegalo en WhatsApp con tu asesor</p>
+                  <p style="margin:0 0 10px 0;color:#fff;font-weight:bold;">Mensaje para tu asesor (cortar y pegar en WhatsApp):</p>
+                  <div style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;white-space:pre-wrap;">{msg_whatsapp_v}</div>
                 </div>
                 """
 
+        if mantenes:
             html += """
             <h3 style="color:#74b9ff;">Mantener</h3>
             <table style="width:100%;border-collapse:collapse;">
             <tr>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Ticker</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Precio</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">P&L</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Razón</th>
             </tr>
             """
             for s in mantenes:
                 color = '#00b894' if s.get('pnl_pct', 0) >= 0 else '#e17055'
                 html += f"""
                 <tr>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;">{s['ticker']}</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${s['precio']:.2f}</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:{color};">{s.get('pnl_pct', 0):+.2f}%</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;font-weight:bold;">{s['ticker']}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:{color};"><b>{s.get('pnl_pct', 0):+.2f}%</b></td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;font-size:12px;">{s.get('razon', '')}</td>
                 </tr>
                 """
             html += "</table>"
 
-    if not señales and not posiciones:
-        html += '<p style="color:#666;text-align:center;margin:30px 0;">Sin señales hoy</p>'
-
+    html += """
+    <p style="color:#636e72;font-size:11px;margin-top:20px;border-top:1px solid #0f3460;padding-top:10px;">
+        Momentum Breakout Pro | Sistema automatico de señales
+    </p>
+    """
     return html
 
 
@@ -603,11 +621,40 @@ if __name__ == '__main__':
         elif sys.argv[1] == '--estado':
             estado = cargar_estado()
             print(json.dumps(estado, indent=2, default=str))
+        elif sys.argv[1] == '--registrar-compra' and len(sys.argv) >= 6:
+            from operaciones_tracker import registrar_compra
+            ticker = sys.argv[2]
+            cedears = int(sys.argv[3])
+            precio = float(sys.argv[4])
+            mep = float(sys.argv[5])
+            registrar_compra(ticker, datetime.now().strftime('%Y-%m-%d'), cedears, precio, mep)
+            generar_tracker_excel()
+            print(f"  [OK] Compra registrada: {cedears} CEDEARs de {ticker} a ARS {precio}")
+        elif sys.argv[1] == '--registrar-venta' and len(sys.argv) >= 6:
+            from operaciones_tracker import registrar_venta
+            ticker = sys.argv[2]
+            cedears = int(sys.argv[3])
+            precio = float(sys.argv[4])
+            mep = float(sys.argv[5])
+            registrar_venta(ticker, datetime.now().strftime('%Y-%m-%d'), cedears, precio, mep)
+            generar_tracker_excel()
+            print(f"  [OK] Venta registrada: {cedears} CEDEARs de {ticker} a ARS {precio}")
+        elif sys.argv[1] == '--tracker':
+            estado = calcular_estado()
+            print(f"Capital inicial: USD {estado['capital_inicial']:,.2f}")
+            print(f"Capital disponible: ARS {fmt_ars(estado['capital_disponible_ars'])}")
+            print(f"Posiciones activas: {len(estado['posiciones'])}")
+            for t, p in estado['posiciones'].items():
+                print(f"  {t}: {p['cedears']} CEDEARs (invertido: ARS {fmt_ars(p['costo_total'])})")
+            generar_tracker_excel()
         else:
             print("Uso:")
-            print("  python bot_alertas.py                    # Ejecutar bot (analisis + email)")
+            print("  python bot_alertas.py                              # Ejecutar bot")
             print("  python bot_alertas.py --comprar TICKER PRECIO CANTIDAD")
             print("  python bot_alertas.py --vender TICKER PRECIO")
-            print("  python bot_alertas.py --estado           # Ver estado actual")
+            print("  python bot_alertas.py --estado                     # Ver estado")
+            print("  python bot_alertas.py --registrar-compra TICKER CEDEARS PRECIO MEP")
+            print("  python bot_alertas.py --registrar-venta TICKER CEDEARS PRECIO MEP")
+            print("  python bot_alertas.py --tracker                    # Ver resumen y generar Excel")
     else:
         ejecutar_bot()
