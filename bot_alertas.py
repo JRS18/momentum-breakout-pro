@@ -59,7 +59,7 @@ def cargar_estado():
             return json.load(f)
     return {
         'posiciones': {},
-        'capital_disponible': 10000,
+        'capital_disponible': 5000,
         'historial': [],
         'ultima_ejecucion': ''
     }
