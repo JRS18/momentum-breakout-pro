@@ -4,7 +4,7 @@ Configuracion - Estrategia Momentum Breakout
 Ultra optimizada para maximo CAGR sin leverage
 """
 
-INITIAL_CAPITAL = 10000
+INITIAL_CAPITAL = 5000
 
 # 11 tickers optimizados
 TICKERS = [
