@@ -261,22 +261,25 @@ def generar_html_reporte(señales, posiciones, capital, config):
             <table style="width:100%;border-collapse:collapse;">
             <tr>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Ticker</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Precio</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Comprar</th>
-                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Acciones</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">P. CEDEAR</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">Inversión</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">CEDEARs</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;">RSI</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Razón</th>
             </tr>
             """
             for s in compras:
-                acciones_sugeridas = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
-                monto_real = acciones_sugeridas * s['precio']
+                ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
+                mep = obtener_dolar_mep()
+                precio_cedear_ars = s['precio'] * mep / ratio
+                cedears = int(monto_compra / precio_cedear_ars) if precio_cedear_ars > 0 else 0
+                monto_real_ars = cedears * precio_cedear_ars
                 html += f"""
                 <tr>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;font-weight:bold;">{s['ticker']}</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${s['precio']:.2f}</td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#00b894;"><b>${monto_real:,.2f}</b></td>
-                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{acciones_sugeridas} acciones</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${precio_cedear_ars:,.0f} ARS</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#00b894;"><b>${monto_real_ars:,.0f} ARS</b></td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{cedears} CEDEARs</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{s['rsi']:.0f}</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;font-size:12px;">{s['razon']}</td>
                 </tr>
@@ -288,18 +291,19 @@ def generar_html_reporte(señales, posiciones, capital, config):
             if len(compras) == 1:
                 s = compras[0]
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                cedears = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
-                precio_ars = s['precio'] * ratio
-                monto_ars = cedears * s['precio']
-                msg_whatsapp = f"Lucas, buenas tardes. Quisiera realizar una compra de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1 ({ratio} CEDEARs = 1 acción en EE.UU.)\n{cedears} CEDEARs × ${s['precio']:,.0f} ARS = ${monto_ars:,.0f} ARS\nPrecio actual: ${precio_ars:,.0f} ARS (~USD {s['precio']:.2f})\n\nQuedo atento."
+                precio_cedear_ars = s['precio'] * mep / ratio
+                cedears = int(monto_compra / precio_cedear_ars) if precio_cedear_ars > 0 else 0
+                monto_ars = cedears * precio_cedear_ars
+                msg_whatsapp = f"Lucas, buenas tardes. Quisiera realizar una compra de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1 ({ratio} CEDEARs = 1 acción en EE.UU.)\n{cedears} CEDEARs × ${precio_cedear_ars:,.0f} ARS = ${monto_ars:,.0f} ARS\n\nQuedo atento."
             elif len(compras) > 1:
                 lineas = []
                 monto_total = 0
                 for s in compras:
                     ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                    cedears = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
-                    monto_ars = cedears * s['precio']
-                    lineas.append(f"• {s['ticker']}: {cedears} CEDEARs × ${s['precio']:,.0f} ARS = ${monto_ars:,.0f} ARS")
+                    precio_cedear_ars = s['precio'] * mep / ratio
+                    cedears = int(monto_compra / precio_cedear_ars) if precio_cedear_ars > 0 else 0
+                    monto_ars = cedears * precio_cedear_ars
+                    lineas.append(f"• {s['ticker']}: {cedears} CEDEARs × ${precio_cedear_ars:,.0f} ARS = ${monto_ars:,.0f} ARS")
                     monto_total += monto_ars
                 msg_whatsapp = f"Lucas, buenas tardes. Quisiera realizar compras de CEDEARs:\n\n" + "\n".join(lineas) + f"\n\nMonto total: ${monto_total:,.0f} ARS\n\nQuedo atento."
             else:
@@ -334,17 +338,18 @@ def generar_html_reporte(señales, posiciones, capital, config):
             html += "</table>"
 
             # Generar mensaje WhatsApp para venta
+            mep = obtener_dolar_mep()
             if len(ventas) == 1:
                 s = ventas[0]
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                precio_ars = s['precio'] * ratio
-                msg_whatsapp_v = f"Lucas, buenas tardes. Quisiera realizar una venta de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1\nPrecio actual: ${precio_ars:,.0f} ARS (~USD {s['precio']:.2f})\n\nQuedo atento."
+                precio_cedear_ars = s['precio'] * mep / ratio
+                msg_whatsapp_v = f"Lucas, buenas tardes. Quisiera realizar una venta de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1\nPrecio actual: ${precio_cedear_ars:,.0f} ARS (~USD {s['precio']:.2f})\n\nQuedo atento."
             elif len(ventas) > 1:
                 lineas = []
                 for s in ventas:
                     ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                    precio_ars = s['precio'] * ratio
-                    lineas.append(f"• {s['ticker']}: ${precio_ars:,.0f} ARS (~USD {s['precio']:.2f})")
+                    precio_cedear_ars = s['precio'] * mep / ratio
+                    lineas.append(f"• {s['ticker']}: ${precio_cedear_ars:,.0f} ARS (~USD {s['precio']:.2f})")
                 msg_whatsapp_v = f"Lucas, buenas tardes. Quisiera realizar ventas de CEDEARs:\n\n" + "\n".join(lineas) + "\n\nQuedo atento."
             else:
                 msg_whatsapp_v = ""
