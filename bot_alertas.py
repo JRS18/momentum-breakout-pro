@@ -20,6 +20,12 @@ DATA_DIR = os.path.join(RUTA, 'data')
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
+# Ratios de conversión CEDEARs (24:1 = 24 CEDEARs = 1 acción en EE.UU.)
+CEDEAR_RATIOS = {
+    'NVDA': 24, 'AMD': 3, 'GOOGL': 11, 'META': 8, 'CRWD': 4,
+    'RIOT': 10, 'AMC': 20, 'MRNA': 5, 'BB': 10, 'PLTR': 10, 'NET': 5
+}
+
 
 def cargar_config():
     with open(CONFIG_PATH) as f:
@@ -270,14 +276,20 @@ def generar_html_reporte(señales, posiciones, capital, config):
             # Generar mensaje WhatsApp para asesor
             if len(compras) == 1:
                 s = compras[0]
-                acc = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
-                msg_whatsapp = f"Hola, quiero comprar {acc} acciones de {s['ticker']} a ~${s['precio']:.2f} (monto: ~${acc * s['precio']:,.2f})"
+                ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
+                cedears = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
+                usd_equiv = cedears * s['precio'] / 1530  # aprox MEP
+                msg_whatsapp = f"Hola, buenas tardes. Quisiera realizar una compra de CEDEARs de {s['ticker']} en BYMA.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1 ({ratio} CEDEARs = 1 acción en EE.UU.)\nCantidad: {cedears} CEDEARs\nPrecio actual: ${s['precio']:,.0f} ARS\nMonto total: ${cedears * s['precio']:,.0f} ARS (~USD {usd_equiv:,.0f})\n\nQuedo atento."
             elif len(compras) > 1:
                 lineas = []
+                monto_total = 0
                 for s in compras:
-                    acc = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
-                    lineas.append(f"{acc} de {s['ticker']} a ~${s['precio']:.2f}")
-                msg_whatsapp = f"Hola, quiero comprar:\n" + "\n".join(lineas) + f"\nMonto total: ~${sum(int(monto_compra / s['precio']) * s['precio'] for s in compras):,.2f}"
+                    ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
+                    cedears = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
+                    lineas.append(f"• {s['ticker']}: {cedears} CEDEARs (ratio {ratio}:1) a ${s['precio']:,.0f} ARS")
+                    monto_total += cedears * s['precio']
+                usd_total = monto_total / 1530
+                msg_whatsapp = f"Hola, buenas tardes. Quisiera realizar compras de CEDEARs en BYMA:\n\n" + "\n".join(lineas) + f"\n\nMonto total: ${monto_total:,.0f} ARS (~USD {usd_total:,.0f})\n\nQuedo atento."
             else:
                 msg_whatsapp = ""
 
@@ -312,10 +324,14 @@ def generar_html_reporte(señales, posiciones, capital, config):
             # Generar mensaje WhatsApp para venta
             if len(ventas) == 1:
                 s = ventas[0]
-                msg_whatsapp_v = f"Hola, quiero vender {s['ticker']} a ~${s['precio']:.2f}"
+                ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
+                msg_whatsapp_v = f"Hola, buenas tardes. Quisiera realizar una venta de CEDEARs de {s['ticker']} en BYMA.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1\nPrecio actual: ${s['precio']:,.0f} ARS\n\nQuedo atento."
             elif len(ventas) > 1:
-                tickers_v = ", ".join([f"{s['ticker']} a ~${s['precio']:.2f}" for s in ventas])
-                msg_whatsapp_v = f"Hola, quiero vender: {tickers_v}"
+                lineas = []
+                for s in ventas:
+                    ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
+                    lineas.append(f"• {s['ticker']} (ratio {ratio}:1) a ${s['precio']:,.0f} ARS")
+                msg_whatsapp_v = f"Hola, buenas tardes. Quisiera realizar ventas de CEDEARs en BYMA:\n\n" + "\n".join(lineas) + "\n\nQuedo atento."
             else:
                 msg_whatsapp_v = ""
 
