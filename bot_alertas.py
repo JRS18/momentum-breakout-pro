@@ -267,19 +267,29 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 """
             html += "</table>"
 
-            html += f"""
-            <div style="background:#0f3460;border-radius:8px;padding:15px;margin:15px 0;">
-              <p style="margin:0;color:#00b894;font-weight:bold;">Para confirmar tu compra, ejecutá:</p>
-              <p style="margin:5px 0 0 0;font-family:monospace;color:#e0e0e0;">
-                python bot_alertas.py --comprar TICKER PRECIO CANTIDAD
-              </p>
-              <p style="margin:5px 0 0 0;color:#666;font-size:12px;">
-                Ejemplo: python bot_alertas.py --comprar NVDA 210.50 38
-              </p>
-            </div>
-            """
+            # Generar mensaje WhatsApp para asesor
+            if len(compras) == 1:
+                s = compras[0]
+                acc = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
+                msg_whatsapp = f"Hola, quiero comprar {acc} acciones de {s['ticker']} a ~${s['precio']:.2f} (monto: ~${acc * s['precio']:,.2f})"
+            elif len(compras) > 1:
+                lineas = []
+                for s in compras:
+                    acc = int(monto_compra / s['precio']) if s['precio'] > 0 else 0
+                    lineas.append(f"{acc} de {s['ticker']} a ~${s['precio']:.2f}")
+                msg_whatsapp = f"Hola, quiero comprar:\n" + "\n".join(lineas) + f"\nMonto total: ~${sum(int(monto_compra / s['precio']) * s['precio'] for s in compras):,.2f}"
+            else:
+                msg_whatsapp = ""
 
-        if ventas:
+            if msg_whatsapp:
+                html += f"""
+                <div style="background:#25D366;border-radius:8px;padding:15px;margin:15px 0;">
+                  <p style="margin:0 0 10px 0;color:#fff;font-weight:bold;">📱 Mensaje para tu asesor (cortar y pegar en WhatsApp):</p>
+                  <div id="msg-whatsapp" style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;white-space:pre-wrap;">{msg_whatsapp}</div>
+                  <p style="margin:10px 0 0 0;color:#fff;font-size:12px;">Copiá el mensaje de arriba y pegalo en WhatsApp con tu asesor</p>
+                </div>
+                """
+
             html += """
             <h3 style="color:#e17055;">Señales de VENTA</h3>
             <table style="width:100%;border-collapse:collapse;">
@@ -299,19 +309,25 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 """
             html += "</table>"
 
-            html += """
-            <div style="background:#0f3460;border-radius:8px;padding:15px;margin:15px 0;">
-              <p style="margin:0;color:#e17055;font-weight:bold;">Para confirmar tu venta, ejecutá:</p>
-              <p style="margin:5px 0 0 0;font-family:monospace;color:#e0e0e0;">
-                python bot_alertas.py --vender TICKER PRECIO
-              </p>
-              <p style="margin:5px 0 0 0;color:#666;font-size:12px;">
-                Ejemplo: python bot_alertas.py --vender NVDA 215.30
-              </p>
-            </div>
-            """
+            # Generar mensaje WhatsApp para venta
+            if len(ventas) == 1:
+                s = ventas[0]
+                msg_whatsapp_v = f"Hola, quiero vender {s['ticker']} a ~${s['precio']:.2f}"
+            elif len(ventas) > 1:
+                tickers_v = ", ".join([f"{s['ticker']} a ~${s['precio']:.2f}" for s in ventas])
+                msg_whatsapp_v = f"Hola, quiero vender: {tickers_v}"
+            else:
+                msg_whatsapp_v = ""
 
-        if mantenes and len(mantenes) <= 6:
+            if msg_whatsapp_v:
+                html += f"""
+                <div style="background:#25D366;border-radius:8px;padding:15px;margin:15px 0;">
+                  <p style="margin:0 0 10px 0;color:#fff;font-weight:bold;">📱 Mensaje para tu asesor (cortar y pegar en WhatsApp):</p>
+                  <div id="msg-whatsapp" style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;white-space:pre-wrap;">{msg_whatsapp_v}</div>
+                  <p style="margin:10px 0 0 0;color:#fff;font-size:12px;">Copiá el mensaje de arriba y pegalo en WhatsApp con tu asesor</p>
+                </div>
+                """
+
             html += """
             <h3 style="color:#74b9ff;">Mantener</h3>
             <table style="width:100%;border-collapse:collapse;">

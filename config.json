@@ -2,7 +2,7 @@
     "nombre": "Momentum Breakout Pro",
     "version": "1.0",
     "descripcion": "Swing trading con EMA triple cross, RSI, MACD, ATR. 11 tickers, 4 posiciones max, capital compartido.",
-    "capital_inicial": 10000,
+    "capital_inicial": 5000,
     "tickers": ["RIOT", "AMD", "GOOGL", "NVDA", "CRWD", "AMC", "MRNA", "META", "BB", "PLTR", "NET"],
     "max_posiciones": 4,
     "position_size_pct": 0.80,
