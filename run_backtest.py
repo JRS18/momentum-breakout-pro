@@ -67,9 +67,9 @@ def main():
         
         # Metricas realistas
         print("\n  --- ANALISIS REALISTA ---")
-        print(f"  Nota: El backtesting simula $10,000 de capital inicial")
+        print(f"  Nota: El backtesting simula ${initial_capital:,.0f} de capital inicial")
         print(f"  distribuido entre {len(TICKERS)} tickers con capital compartido.")
-        print(f"  CAGR realista para invertir $10,000: {cagr:.2f}%")
+        print(f"  CAGR realista para invertir ${initial_capital:,.0f}: {cagr:.2f}%")
         
         # Proyecciones
         print("\n  --- PROYECCIONES ---")
