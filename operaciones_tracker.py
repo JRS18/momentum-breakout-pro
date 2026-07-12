@@ -102,7 +102,14 @@ def registrar_venta(ticker, fecha, cedears, precio_cedear_ars, mep, precio_compr
 
 def calcular_estado():
     data = cargar_operaciones()
-    capital = data['capital_inicial']
+    # Convertir capital inicial a ARS
+    try:
+        import requests
+        r = requests.get('https://dolarapi.com/v1/dolares/mep', timeout=5)
+        mep = r.json().get('venta', 1530)
+    except:
+        mep = 1530
+    capital = data['capital_inicial'] * mep  # Convertir USD a ARS
     posiciones = {}
 
     for op in data['operaciones']:
@@ -121,6 +128,7 @@ def calcular_estado():
 
     return {
         'capital_inicial': data['capital_inicial'],
+        'capital_inicial_ars': data['capital_inicial'] * mep,
         'capital_disponible_ars': capital,
         'posiciones': posiciones,
         'operaciones': data['operaciones']

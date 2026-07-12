@@ -13,8 +13,6 @@ import yfinance as yf
 import warnings
 warnings.filterwarnings('ignore')
 
-from operaciones_tracker import cargar_operaciones, calcular_estado, generar_tracker_excel, fmt_ars as fmt_ars_tracker
-
 RUTA = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(RUTA, 'config.json')
 ESTADO_PATH = os.path.join(RUTA, 'estado.json')
