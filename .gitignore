@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
- estado.json
+estado.json
 data/
 *.xlsx
 *.csv
+*.docx
