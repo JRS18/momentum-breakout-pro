@@ -31,10 +31,10 @@ def guardar_operaciones(data):
         json.dump(data, f, indent=2, default=str)
 
 
-def registrar_compra(ticker, fecha, cedears, precio_cedear_ars, mep):
+def registrar_compra(ticker, fecha, cedears, precio_cedear_ars, ccl):
     data = cargar_operaciones()
     ratio = CEDEAR_RATIOS.get(ticker, 1)
-    precio_usd = precio_cedear_ars * ratio / mep
+    precio_usd = precio_cedear_ars * ratio / ccl
     costo_ars = cedears * precio_cedear_ars
     comision_ars = costo_ars * data['comision']
     total_ars = costo_ars + comision_ars
@@ -47,7 +47,7 @@ def registrar_compra(ticker, fecha, cedears, precio_cedear_ars, mep):
         'cedears': cedears,
         'precio_cedear_ars': precio_cedear_ars,
         'precio_usd': precio_usd,
-        'mep': mep,
+        'ccl': ccl,
         'costo_ars': costo_ars,
         'comision_ars': comision_ars,
         'total_ars': total_ars
@@ -57,10 +57,10 @@ def registrar_compra(ticker, fecha, cedears, precio_cedear_ars, mep):
     return op
 
 
-def registrar_venta(ticker, fecha, cedears, precio_cedear_ars, mep, precio_compra_ars=None):
+def registrar_venta(ticker, fecha, cedears, precio_cedear_ars, ccl, precio_compra_ars=None):
     data = cargar_operaciones()
     ratio = CEDEAR_RATIOS.get(ticker, 1)
-    precio_usd = precio_cedear_ars * ratio / mep
+    precio_usd = precio_cedear_ars * ratio / ccl
     ingreso_ars = cedears * precio_cedear_ars
     comision_ars = ingreso_ars * data['comision']
 
@@ -88,7 +88,7 @@ def registrar_venta(ticker, fecha, cedears, precio_cedear_ars, mep, precio_compr
         'cedears': cedears,
         'precio_cedear_ars': precio_cedear_ars,
         'precio_usd': precio_usd,
-        'mep': mep,
+        'ccl': ccl,
         'ingreso_ars': ingreso_ars,
         'comision_ars': comision_ars,
         'ganancia_ars': ganancia_ars,
@@ -105,11 +105,11 @@ def calcular_estado():
     # Convertir capital inicial a ARS
     try:
         import requests
-        r = requests.get('https://dolarapi.com/v1/dolares/mep', timeout=5)
-        mep = r.json().get('venta', 1530)
+        r = requests.get('https://dolarapi.com/v1/dolares/ccl', timeout=5)
+        ccl = r.json().get('venta', 1550)
     except:
-        mep = 1530
-    capital = data['capital_inicial'] * mep  # Convertir USD a ARS
+        ccl = 1550
+    capital = data['capital_inicial'] * ccl  # Convertir USD a ARS
     posiciones = {}
 
     for op in data['operaciones']:
@@ -128,7 +128,7 @@ def calcular_estado():
 
     return {
         'capital_inicial': data['capital_inicial'],
-        'capital_inicial_ars': data['capital_inicial'] * mep,
+        'capital_inicial_ars': data['capital_inicial'] * ccl,
         'capital_disponible_ars': capital,
         'posiciones': posiciones,
         'operaciones': data['operaciones']

@@ -13,6 +13,8 @@ import yfinance as yf
 import warnings
 warnings.filterwarnings('ignore')
 
+from operaciones_tracker import cargar_operaciones, calcular_estado, registrar_compra, registrar_venta, generar_tracker_excel, fmt_ars
+
 RUTA = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(RUTA, 'config.json')
 ESTADO_PATH = os.path.join(RUTA, 'estado.json')
@@ -30,15 +32,15 @@ def fmt_ars(valor):
     """Formatea números en formato argentino (punto para miles, coma para decimales)"""
     return f"{valor:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-def obtener_dolar_mep():
-    """Obtiene el precio del dólar MEP actual"""
+def obtener_dolar_ccl():
+    """Obtiene el precio del dolar CCL actual"""
     try:
         import requests
-        r = requests.get('https://dolarapi.com/v1/dolares/mep', timeout=5)
+        r = requests.get('https://dolarapi.com/v1/dolares/ccl', timeout=5)
         data = r.json()
-        return data.get('venta', 1530)
+        return data.get('venta', 1550)
     except:
-        return 1530
+        return 1550
 
 
 def cargar_config():
@@ -212,7 +214,7 @@ def calcular_monto_compra(capital, posiciones_abiertas, max_posiciones):
 
 def generar_html_reporte(señales, posiciones, capital, config):
     monto_compra = calcular_monto_compra(capital, posiciones, config['max_posiciones'])
-    mep = obtener_dolar_mep()
+    ccl = obtener_dolar_ccl()
 
     html = f"""
     <h2 style="color:#74b9ff;margin-top:0;">Señales del Dia - {datetime.now().strftime('%Y-%m-%d')}</h2>
@@ -220,7 +222,7 @@ def generar_html_reporte(señales, posiciones, capital, config):
       <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Capital Disponible</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;">USD {capital:,.2f}</td></tr>
       <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Posiciones Abiertas</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;">{len(posiciones)}/{config['max_posiciones']}</td></tr>
       <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Monto a Invertir por Señal</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;color:#00b894;">USD {monto_compra:,.2f}</td></tr>
-      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Dolar MEP</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;">${fmt_ars(mep)}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Dolar CCL</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;">${fmt_ars(ccl)}</td></tr>
     </table>
     """
 
@@ -243,12 +245,12 @@ def generar_html_reporte(señales, posiciones, capital, config):
             pnl_pct = ((pos.get('precio_actual', pos['entry_price']) / pos['entry_price']) - 1) * 100
             dias = (datetime.now() - datetime.fromisoformat(pos['entry_date'])).days
             color = '#00b894' if pnl_pct >= 0 else '#e17055'
-            invertido_ars = pos.get('shares', 0) * pos['entry_price'] * mep / ratio
+            invertido_ars = pos.get('shares', 0) * pos['entry_price'] * ccl / ratio
             html += f"""
             <tr>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;font-weight:bold;">{ticker}</td>
-                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(pos['entry_price'] * mep / ratio)} ARS</td>
-                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(pos.get('precio_actual', 0) * mep / ratio)} ARS</td>
+                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(pos['entry_price'] * ccl / ratio)} ARS</td>
+                <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(pos.get('precio_actual', 0) * ccl / ratio)} ARS</td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{pos.get('shares', 0)}</td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(invertido_ars)} ARS</td>
                 <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:{color};"><b>{pnl_pct:+.2f}%</b></td>
@@ -277,8 +279,8 @@ def generar_html_reporte(señales, posiciones, capital, config):
             """
             for s in compras:
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                precio_cedear_ars = s['precio'] * mep / ratio
-                monto_ars = monto_compra * mep
+                precio_cedear_ars = s['precio'] * ccl / ratio
+                monto_ars = monto_compra * ccl
                 cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                 monto_real_ars = cedears * precio_cedear_ars
                 html += f"""
@@ -297,8 +299,8 @@ def generar_html_reporte(señales, posiciones, capital, config):
             if len(compras) == 1:
                 s = compras[0]
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                precio_cedear_ars = s['precio'] * mep / ratio
-                monto_ars = monto_compra * mep
+                precio_cedear_ars = s['precio'] * ccl / ratio
+                monto_ars = monto_compra * ccl
                 cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                 total_ars = cedears * precio_cedear_ars
                 msg_whatsapp = f"Lucas, buenas tardes. Quisiera realizar una compra de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1 ({ratio} CEDEARs = 1 accion en EE.UU.)\n{cedears} x ${fmt_ars(precio_cedear_ars)} ARS = ${fmt_ars(total_ars)} ARS\n\nQuedo atento."
@@ -307,8 +309,8 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 monto_total = 0
                 for s in compras:
                     ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                    precio_cedear_ars = s['precio'] * mep / ratio
-                    monto_ars = monto_compra * mep
+                    precio_cedear_ars = s['precio'] * ccl / ratio
+                    monto_ars = monto_compra * ccl
                     cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                     total_ars = cedears * precio_cedear_ars
                     lineas.append(f"• {s['ticker']}: {cedears} x ${fmt_ars(precio_cedear_ars)} ARS = ${fmt_ars(total_ars)} ARS")
@@ -339,7 +341,7 @@ def generar_html_reporte(señales, posiciones, capital, config):
             """
             for s in ventas:
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                precio_cedear_ars = s['precio'] * mep / ratio
+                precio_cedear_ars = s['precio'] * ccl / ratio
                 # Buscar posicion activa para saber cuantos cedears tenemos
                 pos_act = posiciones.get(s['ticker'], {})
                 cedears = pos_act.get('shares', 0)
@@ -359,7 +361,7 @@ def generar_html_reporte(señales, posiciones, capital, config):
             if len(ventas) == 1:
                 s = ventas[0]
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                precio_cedear_ars = s['precio'] * mep / ratio
+                precio_cedear_ars = s['precio'] * ccl / ratio
                 pos_act = posiciones.get(s['ticker'], {})
                 cedears = pos_act.get('shares', 0)
                 msg_whatsapp_v = f"Lucas, buenas tardes. Quisiera realizar una venta de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1\n{cedears} CEDEARs a ${fmt_ars(precio_cedear_ars)} ARS\n\nQuedo atento."
@@ -367,7 +369,7 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 lineas = []
                 for s in ventas:
                     ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
-                    precio_cedear_ars = s['precio'] * mep / ratio
+                    precio_cedear_ars = s['precio'] * ccl / ratio
                     pos_act = posiciones.get(s['ticker'], {})
                     cedears = pos_act.get('shares', 0)
                     lineas.append(f"• {s['ticker']}: {cedears} CEDEARs a ${fmt_ars(precio_cedear_ars)} ARS")
@@ -624,8 +626,8 @@ if __name__ == '__main__':
             ticker = sys.argv[2]
             cedears = int(sys.argv[3])
             precio = float(sys.argv[4])
-            mep = float(sys.argv[5])
-            registrar_compra(ticker, datetime.now().strftime('%Y-%m-%d'), cedears, precio, mep)
+            ccl = float(sys.argv[5])
+            registrar_compra(ticker, datetime.now().strftime('%Y-%m-%d'), cedears, precio, ccl)
             generar_tracker_excel()
             print(f"  [OK] Compra registrada: {cedears} CEDEARs de {ticker} a ARS {precio}")
         elif sys.argv[1] == '--registrar-venta' and len(sys.argv) >= 6:
@@ -633,8 +635,8 @@ if __name__ == '__main__':
             ticker = sys.argv[2]
             cedears = int(sys.argv[3])
             precio = float(sys.argv[4])
-            mep = float(sys.argv[5])
-            registrar_venta(ticker, datetime.now().strftime('%Y-%m-%d'), cedears, precio, mep)
+            ccl = float(sys.argv[5])
+            registrar_venta(ticker, datetime.now().strftime('%Y-%m-%d'), cedears, precio, ccl)
             generar_tracker_excel()
             print(f"  [OK] Venta registrada: {cedears} CEDEARs de {ticker} a ARS {precio}")
         elif sys.argv[1] == '--tracker':
@@ -651,8 +653,8 @@ if __name__ == '__main__':
             print("  python bot_alertas.py --comprar TICKER PRECIO CANTIDAD")
             print("  python bot_alertas.py --vender TICKER PRECIO")
             print("  python bot_alertas.py --estado                     # Ver estado")
-            print("  python bot_alertas.py --registrar-compra TICKER CEDEARS PRECIO MEP")
-            print("  python bot_alertas.py --registrar-venta TICKER CEDEARS PRECIO MEP")
+            print("  python bot_alertas.py --registrar-compra TICKER CEDEARS PRECIO CCL")
+            print("  python bot_alertas.py --registrar-venta TICKER CEDEARS PRECIO CCL")
             print("  python bot_alertas.py --tracker                    # Ver resumen y generar Excel")
     else:
         ejecutar_bot()
