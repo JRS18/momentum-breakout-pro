@@ -4,6 +4,8 @@ on:
   schedule:
     # Lunes a Viernes a las 10:00 AM Argentina (13:00 UTC)
     - cron: '0 13 * * 1-5'
+    # Lunes a Viernes a las 8:00 PM Argentina (23:00 UTC) - fallback
+    - cron: '0 23 * * 1-5'
   workflow_dispatch: # Permite ejecutar manualmente
 
 jobs:
