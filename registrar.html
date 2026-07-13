@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentum Breakout - Registrar Operacion</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a1a; color: #fff; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { color: #74b9ff; margin-bottom: 20px; font-size: 24px; }
+        .card { background: #0f3460; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        .card h2 { color: #fdcb6e; margin-bottom: 15px; font-size: 16px; }
+        label { display: block; color: #aaa; margin-bottom: 5px; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #1a1a2e; border-radius: 5px;
+                       background: #1a1a2e; color: #fff; font-size: 16px; margin-bottom: 15px; }
+        input:focus, select:focus { outline: none; border-color: #74b9ff; }
+        .row { display: flex; gap: 15px; }
+        .row .col { flex: 1; }
+        .result { background: #1a1a2e; border-radius: 5px; padding: 15px; margin-top: 10px; }
+        .result-item { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .result-item .label { color: #aaa; }
+        .result-item .value { font-weight: bold; }
+        .result-item .value.green { color: #00b894; }
+        .result-item .value.red { color: #e17055; }
+        .command { background: #000; border-radius: 5px; padding: 15px; margin-top: 15px;
+                  font-family: monospace; font-size: 13px; word-break: break-all; }
+        .command .comment { color: #636e72; }
+        .command .cmd { color: #00b894; font-weight: bold; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 5px; font-size: 16px;
+              font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-buy { background: #00b894; color: #fff; }
+        .btn-sell { background: #e17055; color: #fff; }
+        .btn-copy { background: #74b9ff; color: #000; margin-top: 5px; }
+        .btn:hover { opacity: 0.9; }
+        .tabs { display: flex; margin-bottom: 20px; }
+        .tab { flex: 1; padding: 12px; text-align: center; background: #1a1a2e; cursor: pointer;
+              border-radius: 5px 5px 0 0; color: #aaa; }
+        .tab.active { background: #0f3460; color: #fff; }
+        .hidden { display: none; }
+        .ccl-badge { background: #fdcb6e; color: #000; padding: 4px 8px; border-radius: 3px;
+                    font-size: 12px; font-weight: bold; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Momentum Breakout Pro</h1>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('compra')">COMPRA</div>
+            <div class="tab" onclick="showTab('venta')">VENTA</div>
+        </div>
+
+        <!-- FORMULARIO COMPRA -->
+        <div id="compra-form" class="card">
+            <h2>Registrar Compra</h2>
+            
+            <label>Ticker</label>
+            <select id="ticker-compra" onchange="calcularCompra()">
+                <option value="NVDA">NVDA (ratio 24:1)</option>
+                <option value="AMD">AMD (ratio 3:1)</option>
+                <option value="GOOGL">GOOGL (ratio 11:1)</option>
+                <option value="META">META (ratio 8:1)</option>
+                <option value="CRWD">CRWD (ratio 4:1)</option>
+                <option value="RIOT">RIOT (ratio 10:1)</option>
+                <option value="AMC">AMC (ratio 20:1)</option>
+                <option value="MRNA">MRNA (ratio 5:1)</option>
+                <option value="BB">BB (ratio 10:1)</option>
+                <option value="PLTR">PLTR (ratio 10:1)</option>
+                <option value="NET">NET (ratio 5:1)</option>
+            </select>
+            
+            <div class="row">
+                <div class="col">
+                    <label>Precio por CEDEAR (ARS)</label>
+                    <input type="number" id="precio-compra" placeholder="Ej: 13600" oninput="calcularCompra()">
+                </div>
+                <div class="col">
+                    <label>Cantidad CEDEARs</label>
+                    <input type="number" id="cantidad-compra" placeholder="Ej: 298" oninput="calcularCompra()">
+                </div>
+            </div>
+            
+            <label>CCL Actual <span class="ccl-badge" id="ccl-compra">Cargando...</span></label>
+            
+            <div class="result">
+                <div class="result-item">
+                    <span class="label">Monto total:</span>
+                    <span class="value green" id="monto-compra">ARS 0</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">Comision (0.6%):</span>
+                    <span class="value" id="comision-compra">ARS 0</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">Total a debitar:</span>
+                    <span class="value green" id="total-compra">ARS 0</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">Equivalente USD:</span>
+                    <span class="value" id="usd-compra">USD 0</span>
+                </div>
+            </div>
+            
+            <div class="command" id="cmd-compra">
+                <div class="comment"># Copia y pega en la terminal:</div>
+                <div class="cmd" id="cmd-text-compra">python bot_alertas.py --registrar-compra NVDA 0 0 0</div>
+            </div>
+            
+            <button class="btn btn-copy" onclick="copiar('cmd-text-compra')">Copiar Comando</button>
+            <button class="btn btn-buy" onclick="registrar('compra')">Registrar Compra</button>
+        </div>
+
+        <!-- FORMULARIO VENTA -->
+        <div id="venta-form" class="card hidden">
+            <h2>Registrar Venta</h2>
+            
+            <label>Ticker</label>
+            <select id="ticker-venta" onchange="calcularVenta()">
+                <option value="NVDA">NVDA (ratio 24:1)</option>
+                <option value="AMD">AMD (ratio 3:1)</option>
+                <option value="GOOGL">GOOGL (ratio 11:1)</option>
+                <option value="META">META (ratio 8:1)</option>
+                <option value="CRWD">CRWD (ratio 4:1)</option>
+                <option value="RIOT">RIOT (ratio 10:1)</option>
+                <option value="AMC">AMC (ratio 20:1)</option>
+                <option value="MRNA">MRNA (ratio 5:1)</option>
+                <option value="BB">BB (ratio 10:1)</option>
+                <option value="PLTR">PLTR (ratio 10:1)</option>
+                <option value="NET">NET (ratio 5:1)</option>
+            </select>
+            
+            <div class="row">
+                <div class="col">
+                    <label>Precio por CEDEAR (ARS)</label>
+                    <input type="number" id="precio-venta" placeholder="Ej: 15200" oninput="calcularVenta()">
+                </div>
+                <div class="col">
+                    <label>Cantidad CEDEARs</label>
+                    <input type="number" id="cantidad-venta" placeholder="Ej: 298" oninput="calcularVenta()">
+                </div>
+            </div>
+            
+            <label>CCL Actual <span class="ccl-badge" id="ccl-venta">Cargando...</span></label>
+            
+            <div class="result">
+                <div class="result-item">
+                    <span class="label">Ingreso bruto:</span>
+                    <span class="value green" id="monto-venta">ARS 0</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">Comision (0.6%):</span>
+                    <span class="value" id="comision-venta">ARS 0</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">Neto a recibir:</span>
+                    <span class="value green" id="total-venta">ARS 0</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">Equivalente USD:</span>
+                    <span class="value" id="usd-venta">USD 0</span>
+                </div>
+            </div>
+            
+            <div class="command" id="cmd-venta">
+                <div class="comment"># Copia y pega en la terminal:</div>
+                <div class="cmd" id="cmd-text-venta">python bot_alertas.py --registrar-venta NVDA 0 0 0</div>
+            </div>
+            
+            <button class="btn btn-copy" onclick="copiar('cmd-text-venta')">Copiar Comando</button>
+            <button class="btn btn-sell" onclick="registrar('venta')">Registrar Venta</button>
+        </div>
+    </div>
+
+    <script>
+        const RATIOS = {
+            'NVDA': 24, 'AMD': 3, 'GOOGL': 11, 'META': 8, 'CRWD': 4,
+            'RIOT': 10, 'AMC': 20, 'MRNA': 5, 'BB': 10, 'PLTR': 10, 'NET': 5
+        };
+        
+        let cclActual = 1550;
+
+        async function cargarCCL() {
+            try {
+                const r = await fetch('https://dolarapi.com/v1/dolares/ccl');
+                const data = await r.json();
+                cclActual = data.venta;
+                document.getElementById('ccl-compra').textContent = '$' + cclActual.toLocaleString('es-AR');
+                document.getElementById('ccl-venta').textContent = '$' + cclActual.toLocaleString('es-AR');
+            } catch(e) {
+                document.getElementById('ccl-compra').textContent = '$1.550 (default)';
+                document.getElementById('ccl-venta').textContent = '$1.550 (default)';
+            }
+        }
+
+        function fmtARS(valor) {
+            return valor.toLocaleString('es-AR', {maximumFractionDigits: 0});
+        }
+
+        function calcularCompra() {
+            const ticker = document.getElementById('ticker-compra').value;
+            const precio = parseFloat(document.getElementById('precio-compra').value) || 0;
+            const cantidad = parseInt(document.getElementById('cantidad-compra').value) || 0;
+            const ratio = RATIOS[ticker];
+            
+            const monto = precio * cantidad;
+            const comision = monto * 0.006;
+            const total = monto + comision;
+            const usd = total / cclActual;
+            
+            document.getElementById('monto-compra').textContent = 'ARS ' + fmtARS(monto);
+            document.getElementById('comision-compra').textContent = 'ARS ' + fmtARS(comision);
+            document.getElementById('total-compra').textContent = 'ARS ' + fmtARS(total);
+            document.getElementById('usd-compra').textContent = 'USD ' + fmtARS(usd);
+            
+            const cmd = `python bot_alertas.py --registrar-compra ${ticker} ${cantidad} ${precio} ${cclActual}`;
+            document.getElementById('cmd-text-compra').textContent = cmd;
+        }
+
+        function calcularVenta() {
+            const ticker = document.getElementById('ticker-venta').value;
+            const precio = parseFloat(document.getElementById('precio-venta').value) || 0;
+            const cantidad = parseInt(document.getElementById('cantidad-venta').value) || 0;
+            
+            const monto = precio * cantidad;
+            const comision = monto * 0.006;
+            const neto = monto - comision;
+            const usd = neto / cclActual;
+            
+            document.getElementById('monto-venta').textContent = 'ARS ' + fmtARS(monto);
+            document.getElementById('comision-venta').textContent = 'ARS ' + fmtARS(comision);
+            document.getElementById('total-venta').textContent = 'ARS ' + fmtARS(neto);
+            document.getElementById('usd-venta').textContent = 'USD ' + fmtARS(usd);
+            
+            const cmd = `python bot_alertas.py --registrar-venta ${ticker} ${cantidad} ${precio} ${cclActual}`;
+            document.getElementById('cmd-text-venta').textContent = cmd;
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+            
+            if (tab === 'compra') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('compra-form').classList.remove('hidden');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('venta-form').classList.remove('hidden');
+            }
+        }
+
+        function copiar(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Comando copiado!');
+            });
+        }
+
+        function registrar(tipo) {
+            const cmd = tipo === 'compra' 
+                ? document.getElementById('cmd-text-compra').textContent
+                : document.getElementById('cmd-text-venta').textContent;
+            
+            if (tipo === 'compra') {
+                const precio = parseFloat(document.getElementById('precio-compra').value) || 0;
+                const cantidad = parseInt(document.getElementById('cantidad-compra').value) || 0;
+                if (!precio || !cantidad) {
+                    alert('Completa precio y cantidad');
+                    return;
+                }
+            } else {
+                const precio = parseFloat(document.getElementById('precio-venta').value) || 0;
+                const cantidad = parseInt(document.getElementById('cantidad-venta').value) || 0;
+                if (!precio || !cantidad) {
+                    alert('Completa precio y cantidad');
+                    return;
+                }
+            }
+            
+            copiar(tipo === 'compra' ? 'cmd-text-compra' : 'cmd-text-venta');
+            alert('Copiado! Pegalo en la terminal y ejecutalo.');
+        }
+
+        cargarCCL();
+    </script>
+</body>
+</html>

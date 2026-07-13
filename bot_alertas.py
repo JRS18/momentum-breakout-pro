@@ -218,6 +218,14 @@ def generar_html_reporte(señales, posiciones, capital, config):
 
     html = f"""
     <h2 style="color:#74b9ff;margin-top:0;">Señales del Dia - {datetime.now().strftime('%Y-%m-%d')}</h2>
+    
+    <div style="background:#0f3460;border-radius:8px;padding:15px;margin:15px 0;text-align:center;">
+      <a href="file:///{RUTA.replace(os.sep, '/')}/registrar.html" style="color:#74b9ff;font-size:18px;font-weight:bold;text-decoration:none;">
+        Abrir Formulario de Registro
+      </a>
+      <p style="color:#aaa;font-size:12px;margin-top:5px;">Click para abrir el formulario interactivo</p>
+    </div>
+    
     <table style="width:100%;border-collapse:collapse;margin:15px 0;">
       <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Capital Disponible</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;">USD {capital:,.2f}</td></tr>
       <tr><td style="padding:8px;border-bottom:1px solid #0f3460;color:#aaa;">Posiciones Abiertas</td><td style="padding:8px;border-bottom:1px solid #0f3460;font-weight:bold;text-align:right;">{len(posiciones)}/{config['max_posiciones']}</td></tr>
