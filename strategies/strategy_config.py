@@ -6,11 +6,8 @@ Ultra optimizada para maximo CAGR sin leverage
 
 INITIAL_CAPITAL = 5000
 
-# 11 tickers optimizados
-TICKERS = [
-    'RIOT', 'AMD', 'GOOGL', 'NVDA', 'CRWD', 'AMC',
-    'MRNA', 'META', 'BB', 'PLTR', 'NET',
-]
+# 8 tickers optimizados por búsqueda exhaustiva (CAGR 90.7%, MaxDD 54%)
+TICKERS = ['NBIS', 'RGTI', 'IREN', 'RIOT', 'HUT', 'UPST', 'ALAB', 'PLTR']
 
 STRATEGY = {
     'name': 'Momentum Breakout Portfolio',
