@@ -326,6 +326,22 @@ def generar_html_reporte(señales, posiciones, capital, config):
                   <div style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;white-space:pre-wrap;">{msg_whatsapp}</div>
                 </div>
                 """
+                # Comando para registrar operacion
+                for s in compras:
+                    ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
+                    precio_cedear_ars = s['precio'] * ccl / ratio
+                    monto_ars = monto_compra * ccl
+                    cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
+                    html += f"""
+                    <div style="background:#0f3460;border-radius:8px;padding:15px;margin:15px 0;">
+                      <p style="margin:0 0 10px 0;color:#fff;font-weight:bold;">Para registrar la compra (reemplaza PRECIO_REAL con el precio que te cobraron):</p>
+                      <div style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;">
+                        <span style="color:#636e72;"># Precio señal: ${fmt_ars(precio_cedear_ars)} ARS</span><br>
+                        <span style="color:#636e72;"># Cantidad: {cedears} CEDEARs</span><br>
+                        <span style="color:#e17055;font-weight:bold;">python bot_alertas.py --registrar-compra {s['ticker']} {cedears} PRECIO_REAL {fmt_ars(ccl)}</span>
+                      </div>
+                    </div>
+                    """
 
         if ventas:
             html += f"""
@@ -384,6 +400,22 @@ def generar_html_reporte(señales, posiciones, capital, config):
                   <div style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;white-space:pre-wrap;">{msg_whatsapp_v}</div>
                 </div>
                 """
+                # Comando para registrar operacion
+                for s in ventas:
+                    ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
+                    precio_cedear_ars = s['precio'] * ccl / ratio
+                    pos_act = posiciones.get(s['ticker'], {})
+                    cedears = pos_act.get('shares', 0)
+                    html += f"""
+                    <div style="background:#0f3460;border-radius:8px;padding:15px;margin:15px 0;">
+                      <p style="margin:0 0 10px 0;color:#fff;font-weight:bold;">Para registrar la venta (reemplaza PRECIO_REAL con el precio que te pagaron):</p>
+                      <div style="background:#fff;border-radius:5px;padding:10px;color:#333;font-family:monospace;">
+                        <span style="color:#636e72;"># Precio señal: ${fmt_ars(precio_cedear_ars)} ARS</span><br>
+                        <span style="color:#636e72;"># Cantidad: {cedears} CEDEARs</span><br>
+                        <span style="color:#e17055;font-weight:bold;">python bot_alertas.py --registrar-venta {s['ticker']} {cedears} PRECIO_REAL {fmt_ars(ccl)}</span>
+                      </div>
+                    </div>
+                    """
 
         if mantenes:
             html += """
