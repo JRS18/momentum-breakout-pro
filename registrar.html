@@ -252,7 +252,7 @@
         function copiar(elementId) {
             const text = document.getElementById(elementId).textContent;
             navigator.clipboard.writeText(text).then(() => {
-                alert('Comando copiado!\n\nAhora:\n1. Abrí registrar.bat\n2. Click derecho (se pega)\n3. Enter');
+                alert('Comando copiado!\n\nPasos:\n1. Abrí "pegar_y_ejecutar.bat"\n2. Click derecho para pegar\n3. Enter');
             });
         }
 

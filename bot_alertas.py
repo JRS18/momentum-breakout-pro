@@ -222,9 +222,11 @@ def generar_html_reporte(señales, posiciones, capital, config):
     <div style="background:#0f3460;border-radius:8px;padding:15px;margin:15px 0;">
       <p style="color:#fff;font-size:14px;margin:0 0 10px 0;">Para registrar operaciones:</p>
       <ol style="color:#aaa;font-size:13px;margin:0;padding-left:20px;">
-        <li>Ejecutá <b style="color:#74b9ff;">abrir_formulario.bat</b> en la carpeta del bot</li>
+        <li>Ejecutá <b style="color:#74b9ff;">abrir_formulario.bat</b></li>
         <li>Completá precio y cantidad</li>
-        <li>Copiá y pegá el comando en la terminal</li>
+        <li>Click en <b style="color:#00b894;">Copiar Comando</b></li>
+        <li>Ejecutá <b style="color:#74b9ff;">pegar_y_ejecutar.bat</b></li>
+        <li>Click derecho para pegar, Enter</li>
       </ol>
     </div>
     
