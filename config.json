@@ -2,7 +2,7 @@
   "nombre": "Momentum Breakout Pro",
   "version": "1.0",
   "descripcion": "Swing trading con 8 tickers optimizados (CAGR 90.7%, MaxDD 54%, 72 trades)",
-  "capital_inicial": 5000,
+  "capital_inicial": 1000,
   "tickers": [
     "NBIS",
     "RGTI",

@@ -22,7 +22,7 @@ def cargar_operaciones():
     if os.path.exists(OPERACIONES_PATH):
         with open(OPERACIONES_PATH) as f:
             return json.load(f)
-    return {'operaciones': [], 'capital_inicial': 5000, 'comision': 0.006, 'impuesto': 0.015}
+    return {'operaciones': [], 'capital_inicial': 1000, 'comision': 0.006, 'impuesto': 0.015}
 
 
 def guardar_operaciones(data):

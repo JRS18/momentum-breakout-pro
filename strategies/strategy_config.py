@@ -4,7 +4,7 @@ Configuracion - Estrategia Momentum Breakout
 Ultra optimizada para maximo CAGR sin leverage
 """
 
-INITIAL_CAPITAL = 5000
+INITIAL_CAPITAL = 1000
 
 # 8 tickers optimizados por búsqueda exhaustiva (CAGR 90.7%, MaxDD 54%)
 TICKERS = ['NBIS', 'RGTI', 'IREN', 'RIOT', 'HUT', 'UPST', 'ALAB', 'PLTR']
