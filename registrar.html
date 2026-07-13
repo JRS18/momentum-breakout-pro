@@ -108,7 +108,7 @@
             </div>
             
             <button class="btn btn-copy" onclick="copiar('cmd-text-compra')">Copiar Comando</button>
-            <button class="btn btn-buy" onclick="registrar('compra')">Registrar Compra</button>
+            <button class="btn btn-buy" onclick="registrar('compra')">Copiar y Ver Instrucciones</button>
         </div>
 
         <!-- FORMULARIO VENTA -->
@@ -168,7 +168,7 @@
             </div>
             
             <button class="btn btn-copy" onclick="copiar('cmd-text-venta')">Copiar Comando</button>
-            <button class="btn btn-sell" onclick="registrar('venta')">Registrar Venta</button>
+            <button class="btn btn-sell" onclick="registrar('venta')">Copiar y Ver Instrucciones</button>
         </div>
     </div>
 
@@ -252,7 +252,7 @@
         function copiar(elementId) {
             const text = document.getElementById(elementId).textContent;
             navigator.clipboard.writeText(text).then(() => {
-                alert('Comando copiado!');
+                alert('Comando copiado!\n\nAhora:\n1. Abrí registrar.bat\n2. Click derecho (se pega)\n3. Enter');
             });
         }
 
@@ -278,7 +278,6 @@
             }
             
             copiar(tipo === 'compra' ? 'cmd-text-compra' : 'cmd-text-venta');
-            alert('Copiado! Pegalo en la terminal y ejecutalo.');
         }
 
         cargarCCL();
