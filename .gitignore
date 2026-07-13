@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 estado.json
+operaciones.json
 data/
 *.xlsx
 *.csv
