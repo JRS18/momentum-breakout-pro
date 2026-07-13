@@ -1,5 +1,32 @@
 {
-  "operaciones": [],
+  "operaciones": [
+    {
+      "tipo": "COMPRA",
+      "ticker": "NVDA",
+      "fecha": "2026-07-12",
+      "ratio": 24,
+      "cedears": 298,
+      "precio_cedear_ars": 13600.0,
+      "precio_usd": 210.58064516129033,
+      "ccl": 1550.0,
+      "costo_ars": 4052800.0,
+      "comision_ars": 24316.8,
+      "total_ars": 4077116.8
+    },
+    {
+      "tipo": "COMPRA",
+      "ticker": "NVDA",
+      "fecha": "2026-07-12",
+      "ratio": 24,
+      "cedears": 100,
+      "precio_cedear_ars": 13600.0,
+      "precio_usd": 210.58064516129033,
+      "ccl": 1550.0,
+      "costo_ars": 1360000.0,
+      "comision_ars": 8160.0,
+      "total_ars": 1368160.0
+    }
+  ],
   "capital_inicial": 5000,
   "comision": 0.006,
   "impuesto": 0.015
