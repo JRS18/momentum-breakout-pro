@@ -217,7 +217,7 @@ def generar_html_reporte(señales, posiciones, capital, config):
     ccl = obtener_dolar_ccl()
 
     html = f"""
-    <h2 style="color:#74b9ff;margin-top:0;">Señales del Dia - {datetime.now().strftime('%Y-%m-%d')}</h2>
+    <h2 style="color:#74b9ff;margin-top:0;">Señales del Dia - {datetime.now().strftime('%Y-%m-%d %H:%M')}</h2>
     
     <div style="background:#0f3460;border-radius:8px;padding:15px;margin:15px 0;">
       <p style="color:#fff;font-size:14px;margin:0 0 10px 0;">Para registrar operaciones:</p>
@@ -513,10 +513,6 @@ def ejecutar_bot():
 
     config = cargar_config()
     estado = cargar_estado()
-
-    if estado.get('ultima_ejecucion') == hoy:
-        print(f"  Ya se ejecuto hoy ({hoy}). Saliendo...")
-        return
 
     tickers = config['tickers']
     print(f"  Tickers: {', '.join(tickers)}")
