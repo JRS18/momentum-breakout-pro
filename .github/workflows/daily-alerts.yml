@@ -1,0 +1,29 @@
+name: Daily Alert Bot
+
+on:
+  schedule:
+    # Lunes a Viernes a las 10:00 AM Argentina (13:00 UTC)
+    - cron: '0 13 * * 1-5'
+  workflow_dispatch: # Permite ejecutar manualmente
+
+jobs:
+  send-alerts:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Run alert bot
+        env:
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        run: python bot_alertas.py

@@ -6,3 +6,5 @@ data/
 *.xlsx
 *.csv
 *.docx
+
+.env
