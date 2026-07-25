@@ -179,7 +179,7 @@ def enviar_email(asunto, cuerpo, config):
     msg['Bcc'] = ', '.join(receivers)
 
     html = f"""
-    <html><body style="font-family:Arial;font-size:14px;background:#1a1a2e;padding:20px;color:#e0e0e0;">
+    <html lang="es" translate="no"><body style="font-family:Arial;font-size:14px;background:#1a1a2e;padding:20px;color:#e0e0e0;">
     <div style="max-width:700px;margin:auto;background:#16213e;border-radius:10px;padding:25px;border:1px solid #0f3460;">
     {cuerpo}
     <hr style="border-color:#0f3460">
