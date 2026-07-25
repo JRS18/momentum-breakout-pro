@@ -213,6 +213,7 @@ def calcular_monto_compra(capital, posiciones_abiertas, max_posiciones, n_senale
 
 
 def generar_html_reporte(señales, posiciones, capital, config):
+    compras = [s for s in señales if s['tipo'] == 'COMPRA']
     monto_compra = calcular_monto_compra(capital, posiciones, config['max_posiciones'], len(compras))
     ccl = obtener_dolar_ccl()
 
