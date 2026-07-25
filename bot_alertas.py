@@ -291,7 +291,8 @@ def generar_html_reporte(señales, posiciones, capital, config):
             for s in compras:
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                 precio_cedear_ars = s['precio'] * ccl / ratio
-                monto_ars = monto_compra * ccl
+                monto_por_senal = monto_compra / len(compras)
+                monto_ars = monto_por_senal * ccl
                 cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                 monto_real_ars = cedears * precio_cedear_ars
                 html += f"""
@@ -318,10 +319,11 @@ def generar_html_reporte(señales, posiciones, capital, config):
             elif len(compras) > 1:
                 lineas = []
                 monto_total = 0
+                monto_por_senal = monto_compra / len(compras)
                 for s in compras:
                     ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                     precio_cedear_ars = s['precio'] * ccl / ratio
-                    monto_ars = monto_compra * ccl
+                    monto_ars = monto_por_senal * ccl
                     cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                     total_ars = cedears * precio_cedear_ars
                     lineas.append(f"• {s['ticker']}: {cedears} x ${fmt_ars(precio_cedear_ars)} ARS = ${fmt_ars(total_ars)} ARS")
