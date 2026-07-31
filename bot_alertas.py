@@ -286,6 +286,8 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:100px;">P. CEDEAR</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:120px;">Inversion</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:70px;">CEDEARs</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:100px;">Stop Loss</th>
+                <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:100px;">Take Profit</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:right;width:40px;">RSI</th>
                 <th style="padding:6px;border-bottom:2px solid #0f3460;color:#aaa;text-align:left;">Razon</th>
             </tr>
@@ -296,12 +298,16 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 monto_ars = monto_compra * ccl
                 cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                 monto_real_ars = cedears * precio_cedear_ars
+                stop_ars = s.get('stop_loss', 0) * ccl / ratio
+                tp_ars = s.get('take_profit', 0) * ccl / ratio
                 html += f"""
                 <tr>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;font-weight:bold;">{s['ticker']}</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">${fmt_ars(precio_cedear_ars)}</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#00b894;font-weight:bold;">${fmt_ars(monto_real_ars)}</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;font-weight:bold;">{cedears}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#e17055;">${fmt_ars(stop_ars)}</td>
+                    <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;color:#00b894;">${fmt_ars(tp_ars)}</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;text-align:right;">{s['rsi']:.0f}</td>
                     <td style="padding:6px;border-bottom:1px solid #0f3460;font-size:11px;">{s['razon']}</td>
                 </tr>
@@ -316,7 +322,9 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 monto_ars = monto_compra * ccl
                 cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                 total_ars = cedears * precio_cedear_ars
-                msg_whatsapp = f"Lucas, buenas tardes. Quisiera realizar una compra de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1 ({ratio} CEDEARs = 1 accion en EE.UU.)\n{cedears} x ${fmt_ars(precio_cedear_ars)} ARS = ${fmt_ars(total_ars)} ARS\n\nQuedo atento."
+                stop_ars = s.get('stop_loss', 0) * ccl / ratio
+                tp_ars = s.get('take_profit', 0) * ccl / ratio
+                msg_whatsapp = f"Lucas, buenas tardes. Quisiera realizar una compra de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1 ({ratio} CEDEARs = 1 accion en EE.UU.)\n{cedears} x ${fmt_ars(precio_cedear_ars)} ARS = ${fmt_ars(total_ars)} ARS\n\nStop Loss: ${fmt_ars(stop_ars)} ARS\nTake Profit: ${fmt_ars(tp_ars)} ARS\n\nQuedo atento."
             elif len(compras) > 1:
                 lineas = []
                 monto_total = 0
@@ -326,7 +334,10 @@ def generar_html_reporte(señales, posiciones, capital, config):
                     monto_ars = monto_compra * ccl
                     cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                     total_ars = cedears * precio_cedear_ars
+                    stop_ars = s.get('stop_loss', 0) * ccl / ratio
+                    tp_ars = s.get('take_profit', 0) * ccl / ratio
                     lineas.append(f"• {s['ticker']}: {cedears} x ${fmt_ars(precio_cedear_ars)} ARS = ${fmt_ars(total_ars)} ARS")
+                    lineas.append(f"   Stop Loss: ${fmt_ars(stop_ars)} ARS | Take Profit: ${fmt_ars(tp_ars)} ARS")
                     monto_total += total_ars
                 msg_whatsapp = f"Lucas, buenas tardes. Quisiera realizar compras de CEDEARs:\n\n" + "\n".join(lineas) + f"\n\nMonto total: ${fmt_ars(monto_total)} ARS\n\nQuedo atento."
             else:
@@ -569,10 +580,15 @@ def ejecutar_bot():
                             last.get('Vol_Ratio', 1) * 5 +
                             min(last.get('MACD_Hist', 0) * 1000, 20)
                         )
+                        atr = float(last['ATR'])
+                        stop_loss = precio - (atr * 2.0)
+                        riesgo = precio - stop_loss
+                        take_profit = precio + (riesgo * 6.0)
                         señales.append({
                             'tipo': 'COMPRA', 'ticker': ticker,
                             'precio': precio, 'rsi': rsi,
-                            'score': score, 'razon': razon_entrada
+                            'score': score, 'razon': razon_entrada,
+                            'stop_loss': stop_loss, 'take_profit': take_profit
                         })
                     else:
                         pass
