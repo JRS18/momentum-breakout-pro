@@ -70,6 +70,18 @@ def cargar_estado():
     }
 
 
+def obtener_precio_fresco(ticker, fallback):
+    """Obtiene el precio mas fresco de EE.UU. via intradia (1m) para evitar datos desactualizados.
+    Si el mercado esta cerrado usa el ultimo precio intradia disponible; si falla, usa el cierre diario."""
+    try:
+        intra = yf.Ticker(ticker).history(period='1d', interval='1m')
+        if not intra.empty:
+            return float(intra['Close'].iloc[-1])
+    except Exception:
+        pass
+    return fallback
+
+
 def calcular_indicators(df):
     df = df.copy()
     df['EMA_8'] = df['Close'].ewm(span=8, adjust=False).mean()
@@ -313,6 +325,9 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 </tr>
                 """
             html += "</table>"
+            html += """
+            <p style="color:#666;font-size:11px;margin-top:6px;">Precio teorico CEDEAR = precio USD (intradia EE.UU.) x CCL / ratio. Comparalo con el precio real de BYMA en tu broker: si difiere mas de ~1%, el CEDEAR esta desarbitrado (prima o descuento) y podes decidir si conviene entrar.</p>
+            """
 
             # Generar mensaje WhatsApp para asesor
             if len(compras) == 1:
@@ -548,7 +563,7 @@ def ejecutar_bot():
             df = calcular_indicators(df)
 
             last = df.iloc[-1]
-            precio = float(last['Close'])
+            precio = obtener_precio_fresco(ticker, float(last['Close']))
             rsi = float(last['RSI'])
 
             if ticker in posiciones:
