@@ -57,17 +57,14 @@
             
             <label>Ticker</label>
             <select id="ticker-compra" onchange="calcularCompra()">
-                <option value="NVDA">NVDA (ratio 24:1)</option>
-                <option value="AMD">AMD (ratio 3:1)</option>
-                <option value="GOOGL">GOOGL (ratio 11:1)</option>
-                <option value="META">META (ratio 8:1)</option>
-                <option value="CRWD">CRWD (ratio 4:1)</option>
-                <option value="RIOT">RIOT (ratio 10:1)</option>
-                <option value="AMC">AMC (ratio 20:1)</option>
-                <option value="MRNA">MRNA (ratio 5:1)</option>
-                <option value="BB">BB (ratio 10:1)</option>
-                <option value="PLTR">PLTR (ratio 10:1)</option>
-                <option value="NET">NET (ratio 5:1)</option>
+                <option value="NBIS">NBIS (ratio 27:1)</option>
+                <option value="RGTI">RGTI (ratio 2:1)</option>
+                <option value="IREN">IREN (ratio 12:1)</option>
+                <option value="RIOT">RIOT (ratio 3:1)</option>
+                <option value="HUT">HUT (ratio 5:1)</option>
+                <option value="UPST">UPST (ratio 5:1)</option>
+                <option value="ALAB">ALAB (ratio 44:1)</option>
+                <option value="PLTR">PLTR (ratio 3:1)</option>
             </select>
             
             <div class="row">
@@ -117,17 +114,14 @@
             
             <label>Ticker</label>
             <select id="ticker-venta" onchange="calcularVenta()">
-                <option value="NVDA">NVDA (ratio 24:1)</option>
-                <option value="AMD">AMD (ratio 3:1)</option>
-                <option value="GOOGL">GOOGL (ratio 11:1)</option>
-                <option value="META">META (ratio 8:1)</option>
-                <option value="CRWD">CRWD (ratio 4:1)</option>
-                <option value="RIOT">RIOT (ratio 10:1)</option>
-                <option value="AMC">AMC (ratio 20:1)</option>
-                <option value="MRNA">MRNA (ratio 5:1)</option>
-                <option value="BB">BB (ratio 10:1)</option>
-                <option value="PLTR">PLTR (ratio 10:1)</option>
-                <option value="NET">NET (ratio 5:1)</option>
+                <option value="NBIS">NBIS (ratio 27:1)</option>
+                <option value="RGTI">RGTI (ratio 2:1)</option>
+                <option value="IREN">IREN (ratio 12:1)</option>
+                <option value="RIOT">RIOT (ratio 3:1)</option>
+                <option value="HUT">HUT (ratio 5:1)</option>
+                <option value="UPST">UPST (ratio 5:1)</option>
+                <option value="ALAB">ALAB (ratio 44:1)</option>
+                <option value="PLTR">PLTR (ratio 3:1)</option>
             </select>
             
             <div class="row">
@@ -174,8 +168,8 @@
 
     <script>
         const RATIOS = {
-            'NVDA': 24, 'AMD': 3, 'GOOGL': 11, 'META': 8, 'CRWD': 4,
-            'RIOT': 10, 'AMC': 20, 'MRNA': 5, 'BB': 10, 'PLTR': 10, 'NET': 5
+            'NBIS': 27, 'RGTI': 2, 'IREN': 12, 'RIOT': 3,
+            'HUT': 5, 'UPST': 5, 'ALAB': 44, 'PLTR': 3
         };
         
         let cclActual = 1550;
