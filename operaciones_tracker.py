@@ -104,10 +104,10 @@ def calcular_estado():
     # Convertir capital inicial a ARS
     try:
         import requests
-        r = requests.get('https://dolarapi.com/v1/dolares/ccl', timeout=5)
-        ccl = r.json().get('venta', 1550)
+        r = requests.get('https://dolarapi.com/v1/dolares/contadoconliqui', timeout=8)
+        ccl = r.json().get('venta', 0) or 0
     except:
-        ccl = 1550
+        ccl = 0
     capital = data['capital_inicial'] * ccl  # Convertir USD a ARS
     posiciones = {}
 

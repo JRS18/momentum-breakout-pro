@@ -35,11 +35,11 @@ def obtener_dolar_ccl():
     """Obtiene el precio del dolar CCL actual"""
     try:
         import requests
-        r = requests.get('https://dolarapi.com/v1/dolares/ccl', timeout=5)
+        r = requests.get('https://dolarapi.com/v1/dolares/contadoconliqui', timeout=8)
         data = r.json()
-        return data.get('venta', 1550)
+        return float(data.get('venta', 0)) or 0
     except:
-        return 1550
+        return 0
 
 
 def cargar_config():

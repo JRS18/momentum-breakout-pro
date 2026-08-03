@@ -182,7 +182,7 @@
 
         async function cargarCCL() {
             try {
-                const r = await fetch('https://dolarapi.com/v1/dolares/ccl');
+                const r = await fetch('https://dolarapi.com/v1/dolares/contadoconliqui');
                 const data = await r.json();
                 cclActual = data.venta;
                 document.getElementById('ccl-compra').textContent = '$' + cclActual.toLocaleString('es-AR');
