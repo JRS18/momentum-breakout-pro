@@ -58,13 +58,14 @@
             <label>Ticker</label>
             <select id="ticker-compra" onchange="calcularCompra()">
                 <option value="NBIS">NBIS (ratio 27:1)</option>
-                <option value="RGTI">RGTI (ratio 2:1)</option>
-                <option value="IREN">IREN (ratio 12:1)</option>
-                <option value="RIOT">RIOT (ratio 3:1)</option>
-                <option value="HUT">HUT (ratio 5:1)</option>
-                <option value="UPST">UPST (ratio 5:1)</option>
+                <option value="NVDA">NVDA (ratio 24:1)</option>
+                <option value="AVGO">AVGO (ratio 39:1)</option>
                 <option value="ALAB">ALAB (ratio 44:1)</option>
-                <option value="PLTR">PLTR (ratio 3:1)</option>
+                <option value="LLY">LLY (ratio 56:1)</option>
+                <option value="WMT">WMT (ratio 18:1)</option>
+                <option value="IBIT">IBIT (ratio 10:1)</option>
+                <option value="CAT">CAT (ratio 20:1)</option>
+                <option value="XLK">XLK (ratio 46:1)</option>
             </select>
             
             <div class="row">
@@ -115,13 +116,14 @@
             <label>Ticker</label>
             <select id="ticker-venta" onchange="calcularVenta()">
                 <option value="NBIS">NBIS (ratio 27:1)</option>
-                <option value="RGTI">RGTI (ratio 2:1)</option>
-                <option value="IREN">IREN (ratio 12:1)</option>
-                <option value="RIOT">RIOT (ratio 3:1)</option>
-                <option value="HUT">HUT (ratio 5:1)</option>
-                <option value="UPST">UPST (ratio 5:1)</option>
+                <option value="NVDA">NVDA (ratio 24:1)</option>
+                <option value="AVGO">AVGO (ratio 39:1)</option>
                 <option value="ALAB">ALAB (ratio 44:1)</option>
-                <option value="PLTR">PLTR (ratio 3:1)</option>
+                <option value="LLY">LLY (ratio 56:1)</option>
+                <option value="WMT">WMT (ratio 18:1)</option>
+                <option value="IBIT">IBIT (ratio 10:1)</option>
+                <option value="CAT">CAT (ratio 20:1)</option>
+                <option value="XLK">XLK (ratio 46:1)</option>
             </select>
             
             <div class="row">
@@ -168,8 +170,8 @@
 
     <script>
         const RATIOS = {
-            'NBIS': 27, 'RGTI': 2, 'IREN': 12, 'RIOT': 3,
-            'HUT': 5, 'UPST': 5, 'ALAB': 44, 'PLTR': 3
+            'NBIS': 27, 'NVDA': 24, 'AVGO': 39, 'ALAB': 44, 'LLY': 56,
+            'WMT': 18, 'IBIT': 10, 'CAT': 20, 'XLK': 46
         };
         
         let cclActual = 1550;

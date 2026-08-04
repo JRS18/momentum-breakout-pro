@@ -1,0 +1,330 @@
+{
+  "mejor": {
+    "n": 7,
+    "tickers": [
+      "RIOT",
+      "PLTR",
+      "NET",
+      "MRNA",
+      "MDB",
+      "AMD",
+      "SPOT"
+    ],
+    "cagr": 84.86,
+    "max_dd": 53.99,
+    "ratio": 1.5714814814814815
+  },
+  "todos_los_resultados": [
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "AMD",
+        "SPOT"
+      ],
+      "cagr": 84.86,
+      "max_dd": 53.99,
+      "ratio": 1.5714814814814815
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "AMD",
+        "NVDA"
+      ],
+      "cagr": 76.58,
+      "max_dd": 53.99,
+      "ratio": 1.4181481481481482
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "TSLA",
+        "AMD"
+      ],
+      "cagr": 74.2,
+      "max_dd": 53.99,
+      "ratio": 1.3740740740740742
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "AMD",
+        "CRWD"
+      ],
+      "cagr": 73.71,
+      "max_dd": 53.99,
+      "ratio": 1.365
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "TSLA",
+        "AMD",
+        "NVDA"
+      ],
+      "cagr": 73.54,
+      "max_dd": 53.99,
+      "ratio": 1.3618518518518519
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "AMD",
+        "DDOG"
+      ],
+      "cagr": 69.13,
+      "max_dd": 53.99,
+      "ratio": 1.280185185185185
+    },
+    {
+      "n": 5,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB"
+      ],
+      "cagr": 68.72,
+      "max_dd": 53.99,
+      "ratio": 1.2725925925925925
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "TSLA",
+        "AMD",
+        "SPOT"
+      ],
+      "cagr": 65.29,
+      "max_dd": 53.99,
+      "ratio": 1.2090740740740742
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "TSLA",
+        "AMD",
+        "MELI"
+      ],
+      "cagr": 64.82,
+      "max_dd": 53.99,
+      "ratio": 1.2003703703703703
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "TSLA",
+        "AMD",
+        "CRWD"
+      ],
+      "cagr": 64.53,
+      "max_dd": 53.99,
+      "ratio": 1.195
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "AMD",
+        "MELI"
+      ],
+      "cagr": 63.92,
+      "max_dd": 53.99,
+      "ratio": 1.1837037037037037
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "TSLA",
+        "AMD",
+        "DDOG"
+      ],
+      "cagr": 62.51,
+      "max_dd": 53.99,
+      "ratio": 1.1575925925925925
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "TSLA",
+        "MELI"
+      ],
+      "cagr": 61.34,
+      "max_dd": 53.99,
+      "ratio": 1.135925925925926
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "TSLA",
+        "NVDA"
+      ],
+      "cagr": 55.85,
+      "max_dd": 53.99,
+      "ratio": 1.0342592592592592
+    },
+    {
+      "n": 9,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "TSLA",
+        "AMD",
+        "CRWD",
+        "DDOG"
+      ],
+      "cagr": 50.22,
+      "max_dd": 53.99,
+      "ratio": 0.9299999999999999
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "TSLA",
+        "SPOT"
+      ],
+      "cagr": 48.87,
+      "max_dd": 53.99,
+      "ratio": 0.9049999999999999
+    },
+    {
+      "n": 11,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "TSLA",
+        "AMD",
+        "CRWD",
+        "DDOG",
+        "NVDA",
+        "SPOT"
+      ],
+      "cagr": 47.85,
+      "max_dd": 53.99,
+      "ratio": 0.8861111111111112
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "TSLA",
+        "CRWD"
+      ],
+      "cagr": 45.12,
+      "max_dd": 53.99,
+      "ratio": 0.8355555555555555
+    },
+    {
+      "n": 13,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "TSLA",
+        "AMD",
+        "CRWD",
+        "DDOG",
+        "NVDA",
+        "SPOT",
+        "MELI",
+        "UBER"
+      ],
+      "cagr": 42.27,
+      "max_dd": 53.99,
+      "ratio": 0.7827777777777778
+    },
+    {
+      "n": 7,
+      "tickers": [
+        "RIOT",
+        "PLTR",
+        "NET",
+        "MRNA",
+        "MDB",
+        "TSLA",
+        "DDOG"
+      ],
+      "cagr": 40.42,
+      "max_dd": 53.99,
+      "ratio": 0.7485185185185186
+    }
+  ],
+  "fecha": "2026-07-12 20:05"
+}

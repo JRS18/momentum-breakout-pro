@@ -1,5 +1,19 @@
 {
-  "operaciones": [],
+  "operaciones": [
+    {
+      "tipo": "COMPRA",
+      "ticker": "HUT",
+      "fecha": "2026-08-03",
+      "ratio": 5,
+      "cedears": 35,
+      "precio_cedear_ars": 35433.0,
+      "precio_usd": 112.10136674259681,
+      "ccl": 1580.4,
+      "costo_ars": 1240155.0,
+      "comision_ars": 7440.93,
+      "total_ars": 1247595.93
+    }
+  ],
   "capital_inicial": 5000,
   "comision": 0.006,
   "impuesto": 0.015
