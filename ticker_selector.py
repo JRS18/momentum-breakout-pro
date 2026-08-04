@@ -101,10 +101,9 @@ def calcular_metricas(ticker):
         atr14 = pd.Series(tr).rolling(14).mean().values
         atr_h = np.nanmean(atr14[14:] / close[14:]) * 100
         
-        # Volatilidad anualizada y Sharpe
+        # Volatilidad anualizada
         returns = np.diff(close) / close[:-1]
         volat = np.std(returns) * np.sqrt(252) * 100
-        sharpe = np.mean(returns) / (np.std(returns) + 1e-9) * np.sqrt(252)
         
         return {
             'ticker': ticker,
@@ -112,7 +111,6 @@ def calcular_metricas(ticker):
             'max_dd': max_dd,
             'atr_h': atr_h,
             'volat': volat,
-            'sharpe': sharpe,
         }
     except:
         return None
@@ -120,81 +118,63 @@ def calcular_metricas(ticker):
 
 def scoring_compuesto(metrics):
     """
-    Scoring de CONSISTENCIA:
-    1. Sharpe alto (retorno ajustado al riesgo) → premio central
-    2. CAGR positivo
-    3. PENALIZACION por MaxDD alto (lo inverso al scoring viejo)
-    4. ATR en rango moderado (suficiente para swing sin ser ruleta)
-    5. Penalizacion por volatilidad extrema (>120%)
+    Scoring que combina:
+    1. Volatilidad alta (ATR%) → más oportunidades de swing
+    2. CAGR positivo → el stock sube a largo plazo
+    3. MaxDD alto → tolerancia a caídas (necesario para ATR alto)
+    4. Penalización fuerte por CAGR negativo
     """
     cagr = metrics['cagr']
     atr = metrics['atr_h']
     volat = metrics['volat']
     max_dd = metrics['max_dd']
-    sharpe = metrics.get('sharpe', 0)
     
-    score = sharpe * (1 + cagr / 100)
+    # Score base: ATR * Volatilidad (busca stocks con movimiento)
+    score = atr * volat / 10
     
-    # Penalizacion por drawdown: consistencia = menos caidas profundas
+    # Bonus por CAGR positivo
+    if cagr > 0:
+        score *= (1 + cagr / 100)
+    else:
+        # Penalización fuerte por CAGR negativo
+        score *= 0.1
+    
+    # Bonus por MaxDD alto (necesario para tener ATR alto)
     if max_dd > 70:
-        score *= 0.4
+        score *= 1.2
     elif max_dd > 50:
-        score *= 0.7
-    elif max_dd > 30:
-        score *= 0.9
-    
-    # ATR moderado: ni muy quieto ni demasiado loco
-    if atr < 1.5 or atr > 8:
-        score *= 0.85
-    
-    # Volatilidad extrema es ruleta, no swing
-    if volat > 120:
-        score *= 0.8
+        score *= 1.0
     
     return score
 
 
-def seleccionar_tickers(n_seleccionados=8):
-    """Selecciona los mejores tickers con scoring de consistencia + diversificacion por sector."""
+def seleccionar_tickers(n_seleccionados=11):
+    """Selecciona los mejores tickers con scoring compuesto."""
     print("=" * 60)
-    print("  SELECCION DINAMICA - CONSISTENCIA + DIVERSIFICACION")
+    print("  SELECCION DINAMICA - SCORING COMPUESTO")
     print("=" * 60)
     print(f"  Evaluando {len(UNIVERSE_CEDEARS)} CEDEARs...")
     
     resultados = []
-    returns_all = {}
     for ticker in UNIVERSE_CEDEARS.keys():
         print(f"  {ticker}...", end=" ", flush=True)
         m = calcular_metricas(ticker)
         if m:
             score = scoring_compuesto(m)
             m['score'] = score
-            m['sector'] = UNIVERSE_CEDEARS[ticker]['sector']
             resultados.append(m)
-            print(f"CAGR={m['cagr']:5.1f}% Sharpe={m.get('sharpe',0):4.2f} DD={m['max_dd']:4.0f}% Score={score:.1f}")
+            print(f"CAGR={m['cagr']:5.1f}% ATR={m['atr_h']:4.1f}% Vol={m['volat']:4.0f}% DD={m['max_dd']:4.0f}% Score={score:.0f}")
         else:
             print("Sin datos")
     
     resultados.sort(key=lambda x: x['score'], reverse=True)
-    
-    # Seleccion diversificada: max 2 por sector
-    sectores = {}
-    seleccionados = []
-    for r in resultados:
-        if len(seleccionados) >= n_seleccionados:
-            break
-        sec = r['sector']
-        if sectores.get(sec, 0) >= 2:
-            continue
-        seleccionados.append(r)
-        sectores[sec] = sectores.get(sec, 0) + 1
+    seleccionados = resultados[:n_seleccionados]
     
     print(f"\n{'='*60}")
-    print(f"  TOP {len(seleccionados)} (max 2 por sector):")
+    print(f"  TOP {n_seleccionados}:")
     print(f"{'='*60}")
     for i, r in enumerate(seleccionados, 1):
-        print(f"  {i:2d}. {r['ticker']:6s} | Score: {r['score']:7.1f} | CAGR: {r['cagr']:5.1f}% | "
-              f"Sharpe: {r.get('sharpe',0):4.2f} | DD: {r['max_dd']:4.0f}% | Sector: {r['sector']}")
+        print(f"  {i:2d}. {r['ticker']:6s} | Score: {r['score']:7.0f} | CAGR: {r['cagr']:5.1f}% | ATR: {r['atr_h']:4.1f}% | Vol: {r['volat']:4.0f}%")
     
     return seleccionados
 

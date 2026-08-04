@@ -14,7 +14,7 @@ OPERACIONES_PATH = os.path.join(RUTA, 'operaciones.json')
 TRACKER_PATH = os.path.join(RUTA, 'tracker_operaciones.xlsx')
 
 CEDEAR_RATIOS = {
-    "NBIS": 27, "NVDA": 24, "AVGO": 39, "ALAB": 44, "LLY": 56, "WMT": 18, "IBIT": 10, "CAT": 20, "XLK": 46
+    "NBIS": 27, "RGTI": 2, "IREN": 12, "RIOT": 3, "HUT": 5, "UPST": 5, "ALAB": 44, "PLTR": 3
 }
 
 
