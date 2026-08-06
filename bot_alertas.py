@@ -82,6 +82,37 @@ def obtener_precio_fresco(ticker, fallback):
     return fallback
 
 
+def estado_real_desde_operaciones():
+    """Consolida posiciones y capital disponible (USD) desde operaciones.json (fuente real).
+    Devuelve (posiciones, capital_usd). Si no hay operaciones registradas, usa estado.json."""
+    try:
+        ccl = obtener_dolar_ccl()
+        if not ccl:
+            raise ValueError("sin CCL")
+        real = calcular_estado()
+        posiciones = {}
+        for t, p in real['posiciones'].items():
+            compras = [o for o in real['operaciones'] if o['ticker'] == t and o['tipo'] == 'COMPRA']
+            if not compras:
+                continue
+            ult = compras[-1]
+            posiciones[t] = {
+                'entry_price': ult['precio_usd'],
+                'shares': p['cedears'],
+                'entry_date': str(ult['fecha']),
+                'precio_actual': ult['precio_usd'],
+                'costo_total': p['costo_total'] / ccl,
+                'ratio': ult['ratio']
+            }
+        capital_usd = real['capital_disponible_ars'] / ccl
+        if capital_usd < 0:
+            capital_usd = 0
+        return posiciones, capital_usd
+    except Exception:
+        estado = cargar_estado()
+        return estado.get('posiciones', {}), estado.get('capital_disponible', 1000)
+
+
 def calcular_indicators(df):
     df = df.copy()
     df['EMA_8'] = df['Close'].ewm(span=8, adjust=False).mean()
@@ -307,7 +338,7 @@ def generar_html_reporte(señales, posiciones, capital, config):
             for s in compras:
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                 precio_cedear_ars = s['precio'] * ccl / ratio
-                monto_ars = monto_compra * ccl
+                monto_ars = s.get('monto_sugerido', monto_compra) * ccl
                 cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                 monto_real_ars = cedears * precio_cedear_ars
                 stop_ars = s.get('stop_loss', 0) * ccl / ratio
@@ -334,7 +365,7 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 s = compras[0]
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                 precio_cedear_ars = s['precio'] * ccl / ratio
-                monto_ars = monto_compra * ccl
+                monto_ars = s.get('monto_sugerido', monto_compra) * ccl
                 cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                 total_ars = cedears * precio_cedear_ars
                 stop_ars = s.get('stop_loss', 0) * ccl / ratio
@@ -346,7 +377,7 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 for s in compras:
                     ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                     precio_cedear_ars = s['precio'] * ccl / ratio
-                    monto_ars = monto_compra * ccl
+                    monto_ars = s.get('monto_sugerido', monto_compra) * ccl
                     cedears = int(monto_ars / precio_cedear_ars) if precio_cedear_ars > 0 else 0
                     total_ars = cedears * precio_cedear_ars
                     stop_ars = s.get('stop_loss', 0) * ccl / ratio
@@ -381,9 +412,8 @@ def generar_html_reporte(señales, posiciones, capital, config):
             for s in ventas:
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                 precio_cedear_ars = s['precio'] * ccl / ratio
-                # Buscar posicion activa para saber cuantos cedears tenemos
-                pos_act = posiciones.get(s['ticker'], {})
-                cedears = pos_act.get('shares', 0)
+                # Usar datos de la señal (la posicion ya se libero)
+                cedears = s.get('shares', 0)
                 ingreso_ars = cedears * precio_cedear_ars if cedears > 0 else 0
                 html += f"""
                 <tr>
@@ -396,21 +426,27 @@ def generar_html_reporte(señales, posiciones, capital, config):
                 """
             html += "</table>"
 
+            # Rotacion: capital liberado que financia nuevas compras
+            total_liberado = sum(s.get('capital_liberado', 0) for s in ventas)
+            html += f"""
+            <div style="background:#2d3436;border-radius:8px;padding:12px;margin:12px 0;">
+              <p style="margin:0;color:#fdcb6e;font-weight:bold;">Rotacion de capital: al vender se liberan USD {total_liberado:,.2f} que se destinan a las nuevas compras.</p>
+            </div>
+            """
+
             # Generar mensaje WhatsApp para venta
             if len(ventas) == 1:
                 s = ventas[0]
                 ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                 precio_cedear_ars = s['precio'] * ccl / ratio
-                pos_act = posiciones.get(s['ticker'], {})
-                cedears = pos_act.get('shares', 0)
+                cedears = s.get('shares', 0)
                 msg_whatsapp_v = f"Lucas, buenas tardes. Quisiera realizar una venta de CEDEARs de {s['ticker']}.\n\nTicker: {s['ticker']}\nRatio: {ratio}:1\n{cedears} CEDEARs a ${fmt_ars(precio_cedear_ars)} ARS\n\nQuedo atento."
             elif len(ventas) > 1:
                 lineas = []
                 for s in ventas:
                     ratio = CEDEAR_RATIOS.get(s['ticker'], 1)
                     precio_cedear_ars = s['precio'] * ccl / ratio
-                    pos_act = posiciones.get(s['ticker'], {})
-                    cedears = pos_act.get('shares', 0)
+                    cedears = s.get('shares', 0)
                     lineas.append(f"• {s['ticker']}: {cedears} CEDEARs a ${fmt_ars(precio_cedear_ars)} ARS")
                 msg_whatsapp_v = f"Lucas, buenas tardes. Quisiera realizar ventas de CEDEARs:\n\n" + "\n".join(lineas) + "\n\nQuedo atento."
             else:
@@ -546,11 +582,21 @@ def ejecutar_bot():
     tickers = config['tickers']
     print(f"  Tickers: {', '.join(tickers)}")
 
+    # Estado real (posiciones y capital en USD) desde operaciones.json
+    posiciones, capital_disponible = estado_real_desde_operaciones()
+    estado['capital_disponible'] = capital_disponible
+    estado['posiciones'] = posiciones
+    print(f"  Capital disponible (real): USD {capital_disponible:,.2f}")
+    print(f"  Posiciones activas: {len(posiciones)}")
+    for t, p in posiciones.items():
+        print(f"    {t}: {p.get('shares', 0)} CEDEARs @ ${p['entry_price']:.2f}")
+
     end = datetime.now()
     start = end - timedelta(days=400)
     señales = []
-    posiciones = estado.get('posiciones', {})
+    datos_tickers = {}
 
+    # Descargar datos una sola vez por ticker
     for ticker in tickers:
         try:
             df = yf.download(ticker, start=start.strftime('%Y-%m-%d'),
@@ -559,65 +605,97 @@ def ejecutar_bot():
                 continue
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
-
             df = calcular_indicators(df)
-
-            last = df.iloc[-1]
-            precio = obtener_precio_fresco(ticker, float(last['Close']))
-            rsi = float(last['RSI'])
-
-            if ticker in posiciones:
-                pos = posiciones[ticker]
-                pos['precio_actual'] = precio
-                debo_vender, razon = verificar_salida(df, pos)
-                if debo_vender:
-                    pnl_pct = ((precio / pos['entry_price']) - 1) * 100
-                    señales.append({
-                        'tipo': 'VENTA', 'ticker': ticker,
-                        'precio': precio, 'razon': razon,
-                        'pnl_pct': pnl_pct
-                    })
-                    del posiciones[ticker]
-                    estado['capital_disponible'] += pos.get('shares', 0) * precio * 0.984
-                else:
-                    pnl_pct = ((precio / pos['entry_price']) - 1) * 100
-                    señales.append({
-                        'tipo': 'MANTENER', 'ticker': ticker,
-                        'precio': precio, 'pnl_pct': pnl_pct, 'razon': ''
-                    })
-            else:
-                if len(posiciones) < config['max_posiciones']:
-                    entrada_ok, razon_entrada = verificar_entrada(df)
-                    if entrada_ok:
-                        score = (
-                            last.get('Trend_Score', 0) * 10 +
-                            min(last.get('RSI', 50), 70) * 0.5 +
-                            last.get('Vol_Ratio', 1) * 5 +
-                            min(last.get('MACD_Hist', 0) * 1000, 20)
-                        )
-                        atr = float(last['ATR'])
-                        stop_loss = precio - (atr * 2.0)
-                        riesgo = precio - stop_loss
-                        take_profit = precio + (riesgo * 6.0)
-                        señales.append({
-                            'tipo': 'COMPRA', 'ticker': ticker,
-                            'precio': precio, 'rsi': rsi,
-                            'score': score, 'razon': razon_entrada,
-                            'stop_loss': stop_loss, 'take_profit': take_profit
-                        })
-                    else:
-                        pass
-                else:
-                    pass
-
+            datos_tickers[ticker] = df
         except Exception as e:
             print(f"  [ERROR] {ticker}: {e}")
             continue
 
+    # PASO 1: verificar salidas (VENTA) de posiciones reales
+    for ticker, df in datos_tickers.items():
+        if ticker not in posiciones:
+            continue
+        pos = posiciones[ticker]
+        last = df.iloc[-1]
+        precio = obtener_precio_fresco(ticker, float(last['Close']))
+        pos['precio_actual'] = precio
+        debo_vender, razon = verificar_salida(df, pos)
+        if debo_vender:
+            pnl_pct = ((precio / pos['entry_price']) - 1) * 100
+            shares = pos.get('shares', 0)
+            ratio = CEDEAR_RATIOS.get(ticker, 1)
+            liberado_usd = shares * (precio / ratio) * (1 - config['comision'])
+            señales.append({
+                'tipo': 'VENTA', 'ticker': ticker,
+                'precio': precio, 'razon': razon,
+                'pnl_pct': pnl_pct, 'capital_liberado': liberado_usd,
+                'shares': shares
+            })
+            # Liberar posicion y capital para poder rotar
+            del posiciones[ticker]
+            capital_disponible += liberado_usd
+            print(f"    [VENTA] {ticker}: ${precio:.2f} ({pnl_pct:+.2f}%) -> libera USD {liberado_usd:,.2f}")
+        else:
+            pnl_pct = ((precio / pos['entry_price']) - 1) * 100
+            señales.append({
+                'tipo': 'MANTENER', 'ticker': ticker,
+                'precio': precio, 'pnl_pct': pnl_pct, 'razon': ''
+            })
+
+    # PASO 2: detectar señales de compra SOLO para tickers sin posicion
+    candidatas = []
+    for ticker, df in datos_tickers.items():
+        if ticker in posiciones:
+            continue
+        if len(posiciones) >= config['max_posiciones']:
+            break
+        last = df.iloc[-1]
+        precio = obtener_precio_fresco(ticker, float(last['Close']))
+        rsi = float(last['RSI'])
+        entrada_ok, razon_entrada = verificar_entrada(df)
+        if not entrada_ok:
+            continue
+        score = (
+            last.get('Trend_Score', 0) * 10 +
+            min(last.get('RSI', 50), 70) * 0.5 +
+            last.get('Vol_Ratio', 1) * 5 +
+            min(last.get('MACD_Hist', 0) * 1000, 20)
+        )
+        atr = float(last['ATR'])
+        stop_loss = precio - (atr * 2.0)
+        riesgo = precio - stop_loss
+        take_profit = precio + (riesgo * 6.0)
+        precio_cedear_usd = precio / CEDEAR_RATIOS.get(ticker, 1)
+        candidatas.append({
+            'tipo': 'COMPRA', 'ticker': ticker,
+            'precio': precio, 'rsi': rsi,
+            'score': score, 'razon': razon_entrada,
+            'stop_loss': stop_loss, 'take_profit': take_profit,
+            'precio_cedear_usd': precio_cedear_usd
+        })
+
+    # Ordenar por score (mejor primero) para priorizar el capital
+    candidatas.sort(key=lambda x: x.get('score', 0), reverse=True)
+
+    # PASO 3: asignar capital respetando lo disponible (rotacion del dinero)
+    compras = []
+    slots_libres = config['max_posiciones'] - len(posiciones)
+    monto_total_invertir = capital_disponible * config.get('position_size_pct', 0.80)
+    n_max = min(len(candidatas), slots_libres)
+    for s in candidatas[:n_max]:
+        monto_por_senal = monto_total_invertir / max(1, n_max)
+        if monto_por_senal >= s['precio_cedear_usd']:
+            s['monto_sugerido'] = monto_por_senal
+            compras.append(s)
+        else:
+            print(f"    [SIN CAPITAL] {s['ticker']}: precio CEDEAR ${s['precio_cedear_usd']:.2f} > monto ${monto_por_senal:.2f}")
+
+    señales.extend(compras)
     señales.sort(key=lambda x: x.get('score', 0) if x['tipo'] == 'COMPRA' else 0, reverse=True)
 
     print(f"\n  Resumen:")
-    print(f"  Posiciones activas: {len(posiciones)}")
+    print(f"  Capital disponible: USD {capital_disponible:,.2f}")
+    print(f"  Posiciones activas: {len(posiciones)}/{config['max_posiciones']}")
     for t, p in posiciones.items():
         pnl = ((p.get('precio_actual', p['entry_price']) / p['entry_price']) - 1) * 100
         print(f"    {t}: ${p['entry_price']:.2f} -> ${p.get('precio_actual', 0):.2f} ({pnl:+.2f}%)")
@@ -626,17 +704,18 @@ def ejecutar_bot():
     ventas = [s for s in señales if s['tipo'] == 'VENTA']
     print(f"  Señales COMPRA: {len(compras)}")
     for s in compras:
-        print(f"    {s['ticker']}: ${s['precio']:.2f} (score: {s.get('score', 0):.0f})")
+        print(f"    {s['ticker']}: ${s['precio']:.2f} (score: {s.get('score', 0):.0f}) monto: ${s.get('monto_sugerido', 0):.2f}")
     print(f"  Señales VENTA: {len(ventas)}")
     for s in ventas:
         print(f"    {s['ticker']}: ${s['precio']:.2f} ({s['razon']})")
 
     estado['posiciones'] = posiciones
+    estado['capital_disponible'] = capital_disponible
     estado['ultima_ejecucion'] = hoy
     guardar_estado(estado)
 
     if config['email']['enabled'] and config['email']['sender_email']:
-        html = generar_html_reporte(señales, posiciones, estado['capital_disponible'], config)
+        html = generar_html_reporte(señales, posiciones, capital_disponible, config)
         n_acciones = len(compras) + len(ventas)
         asunto = "Sin señales" if n_acciones == 0 else f"{len(compras)} compra(s), {len(ventas)} venta(s)"
         enviar_email(asunto, html, config)
