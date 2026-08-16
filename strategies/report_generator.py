@@ -241,7 +241,7 @@ class ReportGenerator:
         ws = wb.create_sheet("DETALLE TRADES")
         
         # Título
-        ws.merge_cells('A1:P1')
+        ws.merge_cells('A1:Q1')
         ws['A1'] = "DETALLE COMPLETO DE OPERACIONES"
         ws['A1'].font = self.title_font
         ws['A1'].alignment = Alignment(horizontal='center')
@@ -251,7 +251,8 @@ class ReportGenerator:
             "#", "TICKER", "CANTIDAD", "FECHA COMPRA", "PRECIO COMPRA",
             "FECHA VENTA", "PRECIO VENTA", "P&L ($)", "P&L (%)",
             "DÍAS", "MAX DD (%)", "MOTIVO COMPRA",
-            "MONTO INGRESO", "MONTO SALIDA", "MONTO INVERTIDO", "MONTO TOTAL"
+            "MONTO INGRESO", "MONTO SALIDA", "MONTO INVERTIDO", "MONTO TOTAL",
+            "CAPITAL TOTAL"
         ]
         
         row = 3
@@ -280,6 +281,7 @@ class ReportGenerator:
             ws.cell(row=row, column=14, value=trade.exit_amount)
             ws.cell(row=row, column=15, value=trade.invested_amount)
             ws.cell(row=row, column=16, value=trade.total_amount)
+            ws.cell(row=row, column=17, value=trade.capital_total)
             
             # Aplicar estilos
             self._apply_data_style(ws, row, len(headers), is_alternate)
@@ -294,6 +296,7 @@ class ReportGenerator:
             ws.cell(row=row, column=14).number_format = '#,##0.00'
             ws.cell(row=row, column=15).number_format = '#,##0.00'
             ws.cell(row=row, column=16).number_format = '#,##0.00'
+            ws.cell(row=row, column=17).number_format = '#,##0.00'
             
             # Colorear P&L
             pnl_cell = ws.cell(row=row, column=8)
@@ -317,12 +320,14 @@ class ReportGenerator:
         wins = len([t for t in trades if t.pnl > 0])
         total_invested = sum(t.invested_amount for t in trades)
         total_received = sum(t.total_amount for t in trades)
+        capital_final = trades[-1].capital_total if trades else 0
         
         ws.cell(row=row, column=2, value=f"Total Trades: {total_trades}")
         ws.cell(row=row, column=4, value=f"Win Rate: {wins/total_trades*100:.1f}%" if total_trades > 0 else "N/A")
         ws.cell(row=row, column=6, value=f"P&L Total: ${total_pnl:,.2f}")
         ws.cell(row=row, column=13, value=f"Total Invertido: ${total_invested:,.2f}")
         ws.cell(row=row, column=15, value=f"Total Recibido: ${total_received:,.2f}")
+        ws.cell(row=row, column=17, value=f"Capital Final: ${capital_final:,.2f}")
         
         # Ajustar anchos
         for col in range(1, len(headers) + 1):

@@ -39,6 +39,7 @@ class Trade:
     exit_amount: float = 0.0    # quantity * sell_price (monto bruto venta)
     invested_amount: float = 0.0  # cost_basis total (monto invertido con comisiones)
     total_amount: float = 0.0   # proceeds total (monto recibido despues de comisiones e impuestos)
+    capital_total: float = 0.0  # capital total del portafolio (efectivo + posiciones) en el momento de la compra
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -81,6 +82,15 @@ class BacktestEngine:
         shares_by_pct = int((available * self.position_size_pct) / price)
 
         return min(shares_by_risk, shares_by_pct)
+
+    def calcular_capital_total(self, capital: float, positions: dict,
+                               ticker_data: dict, current_date) -> float:
+        """Capital total del portafolio en una fecha = efectivo + valor de posiciones."""
+        position_value = 0
+        for ticker, pos in positions.items():
+            if ticker in ticker_data and current_date in ticker_data[ticker].index:
+                position_value += pos['shares'] * ticker_data[ticker].loc[current_date, 'Close']
+        return capital + position_value
 
     def run_portfolio_backtest(self) -> Dict:
         """
@@ -230,7 +240,9 @@ class BacktestEngine:
                         entry_amount=pos['shares'] * pos['entry_price'],
                         exit_amount=pos['shares'] * signal.price,
                         invested_amount=entry_cost,
-                        total_amount=proceeds
+                        total_amount=proceeds,
+                        capital_total=self.calcular_capital_total(
+                            capital, positions, ticker_data, current_date)
                     )
                     trades.append(trade)
 
@@ -408,7 +420,9 @@ class BacktestEngine:
                     entry_amount=pos['shares'] * pos['entry_price'],
                     exit_amount=pos['shares'] * last_price,
                     invested_amount=entry_cost,
-                    total_amount=proceeds
+                    total_amount=proceeds,
+                    capital_total=self.calcular_capital_total(
+                        capital, positions, ticker_data, last_date)
                 )
                 trades.append(trade)
 
