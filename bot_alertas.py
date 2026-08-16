@@ -24,7 +24,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # Ratios de conversión CEDEARs (X:1 = X CEDEARs = 1 acción en EE.UU.)
 CEDEAR_RATIOS = {
-    "NBIS": 27, "RGTI": 2, "IREN": 12, "RIOT": 3, "HUT": 5, "UPST": 5, "ALAB": 44, "PLTR": 3
+    "NBIS": 27, "RGTI": 2, "IREN": 12, "RIOT": 3, "HUT": 5, "UPST": 5, "ALAB": 44, "PLTR": 3, "JPM": 15
 }
 
 def fmt_ars(valor):

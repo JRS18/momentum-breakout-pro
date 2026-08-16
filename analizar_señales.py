@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 
-tickers = ['NBIS', 'RGTI', 'IREN', 'RIOT', 'HUT', 'UPST', 'ALAB', 'PLTR']
+tickers = ['NBIS', 'RGTI', 'IREN', 'RIOT', 'HUT', 'UPST', 'ALAB', 'PLTR', 'JPM']
 
 end = datetime.now()
 start = end - timedelta(days=400)

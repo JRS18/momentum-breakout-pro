@@ -1,7 +1,7 @@
 {
   "nombre": "Momentum Breakout Pro",
   "version": "1.0",
-  "descripcion": "Swing trading con 8 tickers optimizados (CAGR 90.7%, MaxDD 54%, 72 trades)",
+  "descripcion": "Swing trading con 9 tickers (8 optimizados + JPM, CAGR 90.7%, MaxDD 54%, 72 trades)",
   "capital_inicial": 1000,
   "tickers": [
     "NBIS",
@@ -11,7 +11,8 @@
     "HUT",
     "UPST",
     "ALAB",
-    "PLTR"
+    "PLTR",
+    "JPM"
   ],
   "max_posiciones": 4,
   "position_size_pct": 0.8,
